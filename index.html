@@ -222,14 +222,13 @@
         .data-table tr:hover td { background-color: #f1f5f9; transition: background-color 0.15s; }
         .data-table tr:last-child th, .data-table tr:last-child td { border-bottom: none; }
         
-        .pdf-page-break {
+        /* Built-in html2pdf page break class */
+        .html2pdf__page-break {
             page-break-before: always;
             break-before: page;
-            margin-top: 20px;
-        }
-
-        @media print {
-            .no-print { display: none !important; }
+            height: 0;
+            margin: 0;
+            border: none;
         }
 
         #printable-area { padding: 5px 0; }
@@ -407,7 +406,7 @@
             hotelScheduleTitle: "Horaire de Départ de l'Hôtel",
             excelEmpty: "Le fichier Excel est vide.",
             unknown: "Inconnu",
-            clipNotice: "--- 🚐 AVIS DE DÉPART DE L'HÔTEL ---",
+            clipNotice: "--- 🚐 AVIS DE DÉPART DE L me L'HÔTEL ---",
             clipFlight: "Vol: {date} à {time}",
             clipMeet: "LE TRANSPORT SE RÉUNIT DANS LE HALL À: {time}",
             clipParticulars: "--- Détails du Participant ---"
@@ -615,7 +614,6 @@
         return { start, end };
     }
 
-    // Intelligent Time Matcher with "Closest Earlier Time" Fallback
     function findDepartureInfo(attDate, attTime) {
         if (!attDate || !attTime) return null;
         
@@ -630,7 +628,7 @@
         });
         
         let currentDateContext = "";
-        let dayValidRanges = []; // Store parsed ranges and corresponding hotel departure times for this date
+        let dayValidRanges = [];
         
         for (let i = 0; i < timelineDataRaw.length; i++) {
             const row = timelineDataRaw[i];
@@ -665,19 +663,16 @@
         
         if (dayValidRanges.length === 0) return null;
 
-        // 1. First, check for an exact bracket match
         for (let item of dayValidRanges) {
             if (flightTime >= item.start && flightTime <= item.end) {
                 return item.depTime;
             }
         }
 
-        // 2. Fallback: Find the closest earlier time bracket (delta where range end <= flight time)
         let closestEarlier = null;
         let minDelta = Infinity;
 
         for (let item of dayValidRanges) {
-            // Check if this range is earlier than or equal to the flight time
             if (item.end <= flightTime) {
                 let delta = flightTime - item.end;
                 if (delta < minDelta) {
@@ -691,7 +686,6 @@
             return closestEarlier;
         }
 
-        // 3. Absolute fallback: Return the very first departure time of that day if flight is earlier than all ranges
         return dayValidRanges[0].depTime;
     }
 
@@ -731,7 +725,7 @@
             <p>${langData.checkScheduleBelow}</p>`;
         }
         
-        narrativeHtml += `<div class="notice-action-bar no-print">
+        narrativeHtml += `<div class="notice-action-bar notice-action-bar-btn">
             <button class="action-btn copy-btn-dynamic" onclick="copyToClipboard()">${langData.copyBtn}</button>
         </div>`;
         
@@ -743,7 +737,8 @@
         }
 
         let screenHtml = narrativeHtml + tableHtml;
-        let pdfHtml = screenHtml + `<div class="pdf-page-break"></div>` + `<h3>${langData.hotelScheduleTitle}</h3>` + timelineTableHtmlOnly;
+        // Use html2pdf__page-break for strict html2pdf engine compliance
+        let pdfHtml = screenHtml + `<div class="html2pdf__page-break"></div>` + `<h3>${langData.hotelScheduleTitle}</h3>` + timelineTableHtmlOnly;
 
         document.getElementById('printable-area').innerHTML = pdfHtml;
         currentDisplayedData = textForClipboard;
@@ -765,15 +760,32 @@
     }
 
     function downloadPDF() {
-        const element = document.getElementById('printable-area');
+        const sourceElement = document.getElementById('printable-area');
+        
+        // Clone element specifically for PDF generation to avoid UI layout conflicts
+        const clone = sourceElement.cloneNode(true);
+        
+        // Strip out the copy button container from the PDF clone
+        const actionBars = clone.querySelectorAll('.notice-action-bar-btn');
+        actionBars.forEach(bar => bar.remove());
+
+        // Remove horizontal scroll wrappers in clone so full tables render without clipping
+        const scrollWrappers = clone.querySelectorAll('.table-responsive');
+        scrollWrappers.forEach(wrapper => {
+            wrapper.style.overflow = 'visible';
+            wrapper.style.width = '100%';
+        });
+
         const opt = {
             margin:       [0.5, 0.5, 0.5, 0.5],
             filename:     'Departure_Information.pdf',
             image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true }, 
-            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            html2canvas:  { scale: 2, useCORS: true, scrollX: 0, scrollY: 0 }, 
+            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
+            pagebreak:    { mode: ['css', 'legacy'] }
         };
-        html2pdf().set(opt).from(element).save();
+
+        html2pdf().set(opt).from(clone).save();
     }
 </script>
 
