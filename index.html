@@ -354,7 +354,7 @@
             pdfBtn: "📄 Download as PDF",
             noMatches: "No matches found.",
             recordMatch: "Record Match",
-            attendeeParticulars: "Attendee Particulars (Tab: {tab})",
+            attendeeParticulars: "Attendee Particulars",
             hotelNoticeTitle: "🚐 Hotel Departure Notice",
             flightBasedOn: "Based on your flight scheduled for <strong>{time}</strong> on <strong>{date}</strong>:",
             meetAt: "Please meet transportation in the hotel lobby at",
@@ -379,7 +379,7 @@
             pdfBtn: "📄 Descargar como PDF",
             noMatches: "No se encontraron coincidencias.",
             recordMatch: "Coincidencia de Registro",
-            attendeeParticulars: "Detalles del Asistente (Pestaña: {tab})",
+            attendeeParticulars: "Detalles del Asistente",
             hotelNoticeTitle: "🚐 Aviso de Salida del Hotel",
             flightBasedOn: "Basado en su vuelo programado para las <strong>{time}</strong> el <strong>{date}</strong>:",
             meetAt: "Por favor, reúnase con el transporte en el lobby del hotel a las",
@@ -404,7 +404,7 @@
             pdfBtn: "📄 Télécharger en PDF",
             noMatches: "Aucun résultat trouvé.",
             recordMatch: "Correspondance de Dossier",
-            attendeeParticulars: "Détails du Participant (Onglet: {tab})",
+            attendeeParticulars: "Détails du Participant",
             hotelNoticeTitle: "🚐 Avis de Départ de l'Hôtel",
             flightBasedOn: "Basé sur votre vol prévu à <strong>{time}</strong> le <strong>{date}</strong>:",
             meetAt: "Veuillez rejoindre le transport dans le hall de l'hôtel à",
@@ -705,7 +705,7 @@
         let attDate = "";
         let attTime = "";
         
-        const particularsTitle = langData.attendeeParticulars.replace("{tab}", match.sheetName);
+        const particularsTitle = langData.attendeeParticulars;
         let tableHtml = `<h3>${particularsTitle}</h3><div class="table-responsive"><table class="data-table">`;
         let textForClipboard = ``;
         
