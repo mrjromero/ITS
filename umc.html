@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuestionario para el Nombramiento del Rector - UM</title>
+    <style>
+        :root {
+            --primary-color: #2c2a5c; /* UM Navy Blue style */
+            --secondary-color: #b59a5e; /* UM Gold style */
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+            --border-color: #ccc;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 30px 20px;
+            border-radius: 8px 8px 0 0;
+            margin-bottom: 20px;
+        }
+        .header h1 { margin: 0 0 10px 0; }
+        .header p { margin: 0; font-size: 1.1em; color: var(--secondary-color); }
+        
+        .instructions {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .section {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-top: 5px solid var(--secondary-color);
+        }
+        .section h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        
+        .question { margin-bottom: 25px; }
+        .question-title { font-weight: bold; margin-bottom: 5px; display: block;}
+        .question-desc { color: #555; margin-bottom: 10px; font-style: italic;}
+        
+        .options {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .option-label {
+            display: flex;
+            align-items: center;
+            background-color: #eee;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .option-label:hover { background-color: #ddd; }
+        .option-label input { margin-right: 8px; }
+        
+        .subtotal-box {
+            background-color: #e9ecef;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-align: right;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-top: 15px;
+        }
+
+        .final-summary {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .final-score {
+            font-size: 3em;
+            font-weight: bold;
+            color: var(--secondary-color);
+            margin: 10px 0;
+        }
+        
+        .meta-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .meta-info input, .meta-info select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .btn-print {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.1em;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+        .btn-print:hover { opacity: 0.9; }
+
+        @media print {
+            body { background-color: white; margin: 0; padding: 0; }
+            .btn-print { display: none; }
+            .section, .instructions, .final-summary { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid;}
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>INSTRUMENTO PARA ENTREVISTA</h1>
+        <p>para el Nombramiento del Rector de la Universidad de Montemorelos</p>
+    </div>
+
+    <div class="instructions">
+        <h3>Matriz de Puntuación Confidencial</h3>
+        <div class="meta-info">
+            <div>
+                <label><strong>Nombre del Candidato:</strong></label>
+                <input type="text" placeholder="Escriba el nombre aquí">
+            </div>
+            <div>
+                <label><strong>Fecha de la entrevista:</strong></label>
+                <input type="date">
+            </div>
+            <div>
+                <label><strong>Nombre del Evaluador:</strong></label>
+                <input type="text" placeholder="Su nombre">
+            </div>
+            <div>
+                <label><strong>Recomendación General:</strong></label>
+                <select id="finalRecommendation">
+                    <option value="">-- Seleccione una opción --</option>
+                    <option value="Altamente recomendado">Altamente recomendado</option>
+                    <option value="Recomendado">Recomendado</option>
+                    <option value="Recomendado con condiciones">Recomendado con condiciones</option>
+                    <option value="No recomendado">No recomendado</option>
+                </select>
+            </div>
+        </div>
+        <hr>
+        <h3>Escala de Evaluación (Secciones I, II, III)</h3>
+        <p><strong>1</strong>: Nivel bajo, no cumple con los criterios esperados.<br>
+           <strong>2</strong>: Nivel Básico, cumple parcialmente. Muestra comprensión limitada.<br>
+           <strong>3</strong>: Nivel competente, satisfactorio, cumple adecuadamente.<br>
+           <strong>4</strong>: Nivel sobresaliente. Supera las expectativas.</p>
+    </div>
+
+    <form id="evalForm">
+        <div class="section">
+            <h2>I. Liderazgo Espiritual y Misión Adventista (Valor: 40%)</h2>
+            
+            <div class="question">
+                <span class="question-title">1. Compromiso Personal</span>
+                <div class="question-desc">¿Cómo describiría su vida espiritual personal y de qué manera esta se refleja en su liderazgo diario?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="s1q1" value="1" required> 1</label>
+                    <label class="option-label"><input type="radio" name="s1q1" value="2"> 2</label>
+                    <label class="option-label"><input type="radio" name="s1q1" value="3"> 3</label>
+                    <label class="option-label"><input type="radio" name="s1q1" value="4"> 4</label>
+                </div>
+            </div>
+
+            <div class="question">
+                <span class="question-title">2. Visión y Misión</span>
+                <div class="question-desc">¿Cómo ha articulado e implementado la misión institucional en sus roles anteriores, alineándola con la misión de la Iglesia?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="s1q2" value="1" required> 1</label>
+                    <label class="option-label"><input type="radio" name="s1q2" value="2"> 2</label>
+                    <label class="option-label"><input type="radio" name="s1q2" value="3"> 3</label>
+                    <label class="option-label"><input type="radio" name="s1q2" value="4"> 4</label>
+                </div>
+            </div>
+
+            <div class="question">
+                <span class="question-title">3. Integración de fe y Aprendizaje</span>
+                <div class="question-desc">¿Puede compartir una experiencia concreta donde haya integrado exitosamente la fe con la excelencia académica en una institución educativa?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="s1q3" value="1" required> 1</label>
+                    <label class="option-label"><input type="radio" name="s1q3" value="2"> 2</label>
+                    <label class="option-label"><input type="radio" name="s1q3" value="3"> 3</label>
+                    <label class="option-label"><input type="radio" name="s1q3" value="4"> 4</label>
+                </div>
+            </div>
+
+            <div class="question">
+                <span class="question-title">4. Relaciones Denominacionales</span>
+                <div class="question-desc">¿Cómo ha trabajado con diferentes niveles de la organización eclesiástica (División, Unión, etc.) para fortalecer la misión institucional?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="s1q4" value="1" required> 1</label>
+                    <label class="option-label"><input type="radio" name="s1q4" value="2"> 2</label>
+                    <label class="option-label"><input type="radio" name="s1q4" value="3"> 3</label>
+                    <label class="option-label"><input type="radio" name="s1q4" value="4"> 4</label>
+                </div>
+            </div>
+
+            <div class="question">
+                <span class="question-title">5. Gestión de la Identidad</span>
+                <div class="question-desc">¿Qué estrategias ha utilizado para preservar y fortalecer la identidad adventista en contextos desafiantes o seculares?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="s1q5" value="1" required> 1</label>
+                    <label class="option-label"><input type="radio" name="s1q5" value="2"> 2</label>
+                    <label class="option-label"><input type="radio" name="s1q5" value="3"> 3</label>
+                    <label class="option-label"><input type="radio" name="s1q5" value="4"> 4</label>
+                </div>
+            </div>
+            
+            <div class="subtotal-box">Subtotal Sección I: <span id="sub1">0</span> / 20 puntos</div>
+        </div>
+
+        <div class="section">
+            <h2>II. Liderazgo Académico y Calidad Institucional (Valor: 30%)</h2>
+            
+            <div class="question">
+                <span class="question-title">1. Credenciales Académicas</span>
+                <div class="question-desc">¿Cómo ha contribuido su formación académica y experiencia investigativa al fortalecimiento de las instituciones donde ha servido?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="s2q1" value="1" required> 1</label>
+                    <label class="option-label"><input type="radio" name="s2q1" value="2"> 2</label>
+                    <label class="option-label"><input type="radio" name="s2q1" value="3"> 3</label>
+                    <label class="option-label"><input type="radio" name="s2q1" value="4"> 4</label>
+                </div>
+            </div>
+
+            <div class="question">
+                <span class="question-title">2. Calidad y Acreditación</span>
+                <div class="question-desc">¿Qué experiencia tiene en procesos de acreditación y cómo ha asegurado la mejora continua de los procesos administrativos?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="s2q2" value="1" required> 1</label>
+                    <label class="option-label"><input type="radio" name="s2q2" value="2"> 2</label>
+                    <label class="option-label"><input type="radio" name="s2q2" value="3"> 3</label>
+                    <label class="option-label"><input type="radio" name="s2q2" value="4"> 4</label>
+                </div>
+            </div>
+
+            <div class="question">
+                <span class="question-title">3. Visión de Integración</span>
+                <div class="question-desc">¿Cuál es su visión para una institución que integra educación superior y servicios de salud?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="s2q3" value="1" required> 1</label>
+                    <label class="option-label"><input type="radio" name="s2q3" value="2"> 2</label>
+                    <label class="option-label"><input type="radio" name="s2q3" value="3"> 3</label>
+                    <label class="option-label"><input type="radio" name="s2q3" value="4"> 4</label>
+                </div>
+            </div>
+
+            <div class="question">
+                <span class="question-title">4. Desarrollo Curricular e Innovación</span>
+                <div class="question-desc">¿Cómo garantizaría el equilibrio entre excelencia académica, calidad clínica y sostenibilidad financiera?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="s2q4" value="1" required> 1</label>
+                    <label class="option-label"><input type="radio" name="s2q4" value="2"> 2</label>
+                    <label class="option-label"><input type="radio" name="s2q4" value="3"> 3</label>
+                    <label class="option-label"><input type="radio" name="s2q4" value="4"> 4</label>
+                </div>
+            </div>
+
+            <div class="question">
+                <span class="question-title">5. Desarrollo del Profesorado</span>
+                <div class="question-desc">¿Qué estrategias ha implementado para desarrollar y fortalecer al cuerpo docente?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="s2q5" value="1" required> 1</label>
+                    <label class="option-label"><input type="radio" name="s2q5" value="2"> 2</label>
+                    <label class="option-label"><input type="radio" name="s2q5" value="3"> 3</label>
+                    <label class="option-label"><input type="radio" name="s2q5" value="4"> 4</label>
+                </div>
+            </div>
+
+            <div class="question">
+                <span class="question-title">6. Éxito estudiantil</span>
+                <div class="question-desc">¿Cómo ha trabajado para mejorar la retención, graduación e inserción laboral de los estudiantes?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="s2q6" value="1" required> 1</label>
+                    <label class="option-label"><input type="radio" name="s2q6" value="2"> 2</label>
+                    <label class="option-label"><input type="radio" name="s2q6" value="3"> 3</label>
+                    <label class="option-label"><input type="radio" name="s2q6" value="4"> 4</label>
+                </div>
+            </div>
+            
+            <div class="subtotal-box">Subtotal Sección II: <span id="sub2">0</span> / 24 puntos</div>
+        </div>
+
+        <div class="section">
+            <h2>III. Liderazgo Administrativo y Financiero (Valor: 20%)</h2>
+            
+            <div class="question">
+                <span class="question-title">1. Gestión Financiera</span>
+                <div class="question-desc">¿Puede describir su experiencia administrando presupuestos y generando nuevas fuentes de ingresos?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="s3q1" value="1" required> 1</label>
+                    <label class="option-label"><input type="radio" name="s3q1" value="2"> 2</label>
+                    <label class="option-label"><input type="radio" name="s3q1" value="3"> 3</label>
+                    <label class="option-label"><input type="radio" name="s3q1" value="4"> 4</label>
+                </div>
+            </div>
+
+            <div class="question">
+                <span class="question-title">2. Planificación Estratégica</span>
+                <div class="question-desc">¿Cómo ha liderado procesos de planificación estratégica y asegurado su implementación efectiva?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="s3q2" value="1" required> 1</label>
+                    <label class="option-label"><input type="radio" name="s3q2" value="2"> 2</label>
+                    <label class="option-label"><input type="radio" name="s3q2" value="3"> 3</label>
+                    <label class="option-label"><input type="radio" name="s3q2" value="4"> 4</label>
+                </div>
+            </div>
+
+            <div class="question">
+                <span class="question-title">3. Gestión de Recursos Humanos</span>
+                <div class="question-desc">¿Cómo maneja el liderazgo de equipos y la resolución de conflictos dentro del personal?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="s3q3" value="1" required> 1</label>
+                    <label class="option-label"><input type="radio" name="s3q3" value="2"> 2</label>
+                    <label class="option-label"><input type="radio" name="s3q3" value="3"> 3</label>
+                    <label class="option-label"><input type="radio" name="s3q3" value="4"> 4</label>
+                </div>
+            </div>
+
+            <div class="question">
+                <span class="question-title">4. Manejo de Crisis</span>
+                <div class="question-desc">Cuéntenos sobre una crisis que haya enfrentado y cómo la gestionó.</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="s3q4" value="1" required> 1</label>
+                    <label class="option-label"><input type="radio" name="s3q4" value="2"> 2</label>
+                    <label class="option-label"><input type="radio" name="s3q4" value="3"> 3</label>
+                    <label class="option-label"><input type="radio" name="s3q4" value="4"> 4</label>
+                </div>
+            </div>
+
+            <div class="question">
+                <span class="question-title">5. Visión estratégica institucional</span>
+                <div class="question-desc">¿Cuál es su visión para el futuro de la Universidad de Montemorelos y cómo planea alcanzarla?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="s3q5" value="1" required> 1</label>
+                    <label class="option-label"><input type="radio" name="s3q5" value="2"> 2</label>
+                    <label class="option-label"><input type="radio" name="s3q5" value="3"> 3</label>
+                    <label class="option-label"><input type="radio" name="s3q5" value="4"> 4</label>
+                </div>
+            </div>
+            
+            <div class="subtotal-box">Subtotal Sección III: <span id="sub3">0</span> / 20 puntos</div>
+        </div>
+
+        <div class="section">
+            <h2>IV. Habilidades interpersonales y de desarrollo (Valor: 10%)</h2>
+            <p><em>(1) La respuesta no satisface los criterios; (2) La respuesta es adecuada.</em></p>
+            
+            <div class="question">
+                <span class="question-title">1. Comunicación y presentación</span>
+                <div class="question-desc">¿Cómo adapta su comunicación según las diferentes audiencias con las que interactúa?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="s4q1" value="1" required> 1 (No satisface)</label>
+                    <label class="option-label"><input type="radio" name="s4q1" value="2"> 2 (Adecuada)</label>
+                </div>
+            </div>
+
+            <div class="question">
+                <span class="question-title">2. Recaudación de Fondos</span>
+                <div class="question-desc">¿Qué experiencia tiene en la obtención de fondos y desarrollo de proyectos institucionales?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="s4q2" value="1" required> 1 (No satisface)</label>
+                    <label class="option-label"><input type="radio" name="s4q2" value="2"> 2 (Adecuada)</label>
+                </div>
+            </div>
+
+            <div class="question">
+                <span class="question-title">3. Relaciones Comunitarias</span>
+                <div class="question-desc">¿Cómo ha fortalecido las relaciones entre la institución y la comunidad externa?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="s4q3" value="1" required> 1 (No satisface)</label>
+                    <label class="option-label"><input type="radio" name="s4q3" value="2"> 2 (Adecuada)</label>
+                </div>
+            </div>
+
+            <div class="question">
+                <span class="question-title">4. Liderazgo Colaborativo</span>
+                <div class="question-desc">¿Cómo promueve un liderazgo participativo dentro de su equipo?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="s4q4" value="1" required> 1 (No satisface)</label>
+                    <label class="option-label"><input type="radio" name="s4q4" value="2"> 2 (Adecuada)</label>
+                </div>
+            </div>
+
+            <div class="question">
+                <span class="question-title">5. Adaptabilidad al Cambio</span>
+                <div class="question-desc">¿Cómo ha liderado procesos de cambio en contextos complejos o inciertos?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="s4q5" value="1" required> 1 (No satisface)</label>
+                    <label class="option-label"><input type="radio" name="s4q5" value="2"> 2 (Adecuada)</label>
+                </div>
+            </div>
+
+            <div class="question">
+                <span class="question-title">6. Transformación Institucional</span>
+                <div class="question-desc">¿Cómo ha manejado procesos de transformación institucional o cambio cultural?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="s4q6" value="1" required> 1 (No satisface)</label>
+                    <label class="option-label"><input type="radio" name="s4q6" value="2"> 2 (Adecuada)</label>
+                </div>
+            </div>
+            
+            <div class="subtotal-box">Subtotal Sección IV: <span id="sub4">0</span> / 12 puntos</div>
+        </div>
+
+        <div class="final-summary">
+            <h2>Puntuación Final Ponderada</h2>
+            <div class="final-score"><span id="finalTotal">0.0</span> / 100</div>
+            <p>Calculado en base a pesos: I (40%), II (30%), III (20%), IV (10%)</p>
+        </div>
+        
+        <div class="section">
+            <h2>Observaciones y Notas Finales</h2>
+            <textarea style="width: 100%; height: 100px; padding: 10px; font-family: inherit; border: 1px solid var(--border-color); border-radius: 4px;" placeholder="Escriba cualquier observación adicional aquí..."></textarea>
+        </div>
+
+        <button type="button" class="btn-print" onclick="window.print()">Imprimir o Guardar como PDF</button>
+
+    </form>
+
+    <script>
+        // Logic to calculate subtotals and the final weighted score
+        const form = document.getElementById('evalForm');
+        
+        // Define max possible points for each section
+        const maxS1 = 20; // 5 questions * 4 max points
+        const maxS2 = 24; // 6 questions * 4 max points
+        const maxS3 = 20; // 5 questions * 4 max points
+        const maxS4 = 12; // 6 questions * 2 max points
+
+        function calculateScore() {
+            let s1 = 0, s2 = 0, s3 = 0, s4 = 0;
+
+            // Gather all checked radio buttons
+            const data = new FormData(form);
+            for (let [name, value] of data.entries()) {
+                let numValue = parseInt(value) || 0;
+                if (name.startsWith('s1')) s1 += numValue;
+                if (name.startsWith('s2')) s2 += numValue;
+                if (name.startsWith('s3')) s3 += numValue;
+                if (name.startsWith('s4')) s4 += numValue;
+            }
+
+            // Update UI Subtotals
+            document.getElementById('sub1').textContent = s1;
+            document.getElementById('sub2').textContent = s2;
+            document.getElementById('sub3').textContent = s3;
+            document.getElementById('sub4').textContent = s4;
+
+            // Calculate weighted final score (normalized to 100%)
+            // Weighting: S1=40%, S2=30%, S3=20%, S4=10%
+            let weightedS1 = (s1 / maxS1) * 40;
+            let weightedS2 = (s2 / maxS2) * 30;
+            let weightedS3 = (s3 / maxS3) * 20;
+            let weightedS4 = (s4 / maxS4) * 10;
+
+            // If a section has no answers yet, treat it as 0 to avoid NaN, 
+            // but normally it will just be 0 if unselected.
+            let finalTotal = (weightedS1 || 0) + (weightedS2 || 0) + (weightedS3 || 0) + (weightedS4 || 0);
+
+            // Update UI Final Score (rounded to 1 decimal place)
+            document.getElementById('finalTotal').textContent = finalTotal.toFixed(1);
+        }
+
+        // Attach event listener to update whenever an option is clicked
+        form.addEventListener('change', calculateScore);
+    </script>
+</body>
+</html>
