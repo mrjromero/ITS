@@ -458,7 +458,8 @@
 
     window.onload = async () => {
         try {
-            const response = await fetch(targetFileName);
+            // Cache-busting query parameter added to force fresh fetch on updates
+            const response = await fetch(targetFileName + "?v=" + new Date().getTime(), { cache: "no-store" });
             if (!response.ok) throw new Error("Fetch failed");
             const arrayBuffer = await response.arrayBuffer();
             processExcel(arrayBuffer);
