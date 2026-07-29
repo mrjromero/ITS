@@ -133,6 +133,10 @@
         }
         button.action-btn:hover { background: var(--primary-hover); }
         button.action-btn:active { transform: scale(0.98); }
+        
+        button.action-btn.btn-copied {
+            background: var(--success) !important;
+        }
 
         /* PDF Button Styling */
         .pdf-action-container {
@@ -346,6 +350,7 @@
             fallbackNotice: "<strong>Notice:</strong> Browser security prevented auto-loading. Please select the file manually.",
             selectFile: "Select <strong>departures.xlsx</strong>:",
             copyBtn: "📋 Copy to Clipboard",
+            copiedBtn: "✓ Copied!",
             pdfBtn: "📄 Download as PDF",
             noMatches: "No matches found.",
             recordMatch: "Record Match",
@@ -370,6 +375,7 @@
             fallbackNotice: "<strong>Aviso:</strong> La seguridad del navegador impidió la carga automática. Seleccione el archivo manualmente.",
             selectFile: "Seleccione <strong>departures.xlsx</strong>:",
             copyBtn: "📋 Copiar al Portapapeles",
+            copiedBtn: "✓ ¡Copiado!",
             pdfBtn: "📄 Descargar como PDF",
             noMatches: "No se encontraron coincidencias.",
             recordMatch: "Coincidencia de Registro",
@@ -394,6 +400,7 @@
             fallbackNotice: "<strong>Avis:</strong> La sécurité du navigateur a empêché le chargement automatique. Veuillez sélectionner le fichier manuellement.",
             selectFile: "Sélectionnez <strong>departures.xlsx</strong>:",
             copyBtn: "📋 Copier dans le Presse-papiers",
+            copiedBtn: "✓ Copié !",
             pdfBtn: "📄 Télécharger en PDF",
             noMatches: "Aucun résultat trouvé.",
             recordMatch: "Correspondance de Dossier",
@@ -406,7 +413,7 @@
             hotelScheduleTitle: "Horaire de Départ de l'Hôtel",
             excelEmpty: "Le fichier Excel est vide.",
             unknown: "Inconnu",
-            clipNotice: "--- 🚐 AVIS DE DÉPART DE L me L'HÔTEL ---",
+            clipNotice: "--- 🚐 AVIS DE DÉPART DE L'HÔTEL ---",
             clipFlight: "Vol: {date} à {time}",
             clipMeet: "LE TRANSPORT SE RÉUNIT DANS LE HALL À: {time}",
             clipParticulars: "--- Détails du Participant ---"
@@ -434,7 +441,9 @@
         document.getElementById('btn-pdf').innerText = langData.pdfBtn;
         
         document.querySelectorAll('.copy-btn-dynamic').forEach(btn => {
-            btn.innerText = langData.copyBtn;
+            if (!btn.classList.contains('btn-copied')) {
+                btn.innerText = langData.copyBtn;
+            }
         });
 
         const searchInput = document.getElementById('search-input');
@@ -726,7 +735,7 @@
         }
         
         narrativeHtml += `<div class="notice-action-bar notice-action-bar-btn">
-            <button class="action-btn copy-btn-dynamic" onclick="copyToClipboard()">${langData.copyBtn}</button>
+            <button class="action-btn copy-btn-dynamic" onclick="copyToClipboard(this)">${langData.copyBtn}</button>
         </div>`;
         
         narrativeHtml += `</div>`;
@@ -737,7 +746,6 @@
         }
 
         let screenHtml = narrativeHtml + tableHtml;
-        // Use html2pdf__page-break for strict html2pdf engine compliance
         let pdfHtml = screenHtml + `<div class="html2pdf__page-break"></div>` + `<h3>${langData.hotelScheduleTitle}</h3>` + timelineTableHtmlOnly;
 
         document.getElementById('printable-area').innerHTML = pdfHtml;
@@ -753,8 +761,20 @@
         }
     }
 
-    function copyToClipboard() {
-        navigator.clipboard.writeText(currentDisplayedData).catch(err => {
+    function copyToClipboard(btnElement) {
+        navigator.clipboard.writeText(currentDisplayedData).then(() => {
+            const targetBtn = btnElement || document.querySelector('.copy-btn-dynamic');
+            if (targetBtn) {
+                const langData = i18n[currentLang];
+                targetBtn.innerText = langData.copiedBtn;
+                targetBtn.classList.add('btn-copied');
+                
+                setTimeout(() => {
+                    targetBtn.innerText = langData.copyBtn;
+                    targetBtn.classList.remove('btn-copied');
+                }, 2500);
+            }
+        }).catch(err => {
             console.error("Failed to copy data.", err);
         });
     }
@@ -762,14 +782,11 @@
     function downloadPDF() {
         const sourceElement = document.getElementById('printable-area');
         
-        // Clone element specifically for PDF generation to avoid UI layout conflicts
         const clone = sourceElement.cloneNode(true);
         
-        // Strip out the copy button container from the PDF clone
         const actionBars = clone.querySelectorAll('.notice-action-bar-btn');
         actionBars.forEach(bar => bar.remove());
 
-        // Remove horizontal scroll wrappers in clone so full tables render without clipping
         const scrollWrappers = clone.querySelectorAll('.table-responsive');
         scrollWrappers.forEach(wrapper => {
             wrapper.style.overflow = 'visible';
