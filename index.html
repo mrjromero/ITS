@@ -1,498 +1,781 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cuestionario para el Nombramiento del Rector - UM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0056b3">
+    <title>Attendee Departure Information</title>
+    
+    <!-- SheetJS for processing the Excel File -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <!-- html2pdf for rendering the PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <style>
         :root {
-            --primary-color: #2c2a5c; /* UM Navy Blue style */
-            --secondary-color: #b59a5e; /* UM Gold style */
-            --bg-color: #f4f7f6;
-            --text-color: #333;
-            --border-color: #ccc;
+            --primary: #0056b3;
+            --primary-hover: #004494;
+            --success: #28a745;
+            --bg-color: #f4f7f9;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --table-header-bg: #f8fafc;
+            --table-row-alt: #f8fafc;
         }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.6;
-            padding: 20px;
-            max-width: 900px;
-            margin: 0 auto;
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            max-width: 900px; 
+            margin: 0 auto; 
+            padding: 25px 15px; 
+            background: var(--bg-color); 
+            color: var(--text-main); 
+            line-height: 1.5;
         }
-        .header {
-            text-align: center;
-            background-color: var(--primary-color);
-            color: white;
-            padding: 30px 20px;
-            border-radius: 8px 8px 0 0;
-            margin-bottom: 20px;
+
+        .card { 
+            background: var(--card-bg); 
+            padding: 25px 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+            margin-bottom: 25px; 
+            border: 1px solid rgba(0,0,0,0.02);
+            position: relative; 
         }
-        .header h1 { margin: 0 0 10px 0; }
-        .header p { margin: 0; font-size: 1.1em; color: var(--secondary-color); }
+
+        /* Language Selector Styling */
+        .lang-selector-wrapper {
+            position: absolute;
+            top: 25px;
+            right: 30px;
+        }
         
-        .instructions {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        .lang-selector {
+            padding: 6px 30px 6px 12px;
+            font-size: 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background-color: #f8fafc;
+            color: var(--text-main);
+            cursor: pointer;
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748b%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px top 50%;
+            background-size: 10px auto;
         }
+        .lang-selector:focus { border-color: var(--primary); }
         
-        .section {
-            background-color: white;
-            padding: 25px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            border-top: 5px solid var(--secondary-color);
+        /* Section Header Styling */
+        h2 { 
+            color: var(--primary); 
+            margin-top: 0; 
+            font-size: 1.6rem; 
+            margin-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            padding-right: 120px; 
         }
-        .section h2 {
-            color: var(--primary-color);
+        h3 { 
+            color: #0f172a; 
+            margin-top: 15px; 
+            font-size: 1.25rem;
+            font-weight: 600;
             border-bottom: 2px solid var(--border-color);
             padding-bottom: 10px;
-            margin-top: 0;
-        }
-        
-        .question { margin-bottom: 25px; }
-        .question-title { font-weight: bold; margin-bottom: 5px; display: block;}
-        .question-desc { color: #555; margin-bottom: 10px; font-style: italic;}
-        
-        .options {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        .option-label {
+            margin-bottom: 15px;
             display: flex;
             align-items: center;
-            background-color: #eee;
-            padding: 8px 15px;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: background-color 0.2s;
         }
-        .option-label:hover { background-color: #ddd; }
-        .option-label input { margin-right: 8px; }
         
-        .subtotal-box {
-            background-color: #e9ecef;
-            padding: 10px 15px;
-            border-radius: 5px;
-            text-align: right;
-            font-weight: bold;
-            color: var(--primary-color);
-            margin-top: 15px;
+        p { color: var(--text-muted); margin-top: 0; }
+        
+        /* Modern Input Styling */
+        input[type="text"] { 
+            width: 100%; 
+            padding: 14px 16px; 
+            margin: 15px 0 5px 0; 
+            border: 2px solid #cbd5e1; 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+            -webkit-appearance: none;
         }
+        input[type="text"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.15);
+        }
+        
+        input[type="file"] { margin-top: 10px; font-size: 14px; }
+        
+        /* Touch-Friendly Buttons */
+        button.action-btn { 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 12px 20px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 15px;
+            font-weight: 600;
+            min-height: 44px; 
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        button.action-btn:hover { background: var(--primary-hover); }
+        button.action-btn:active { transform: scale(0.98); }
 
-        .final-summary {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 30px;
+        /* PDF Button Styling */
+        .pdf-action-container {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+        }
+        button.pdf-btn {
+            background: #0f172a;
+        }
+        button.pdf-btn:hover {
+            background: #1e293b;
+        }
+        
+        /* Search Result Buttons */
+        #search-results { margin-top: 15px; }
+        .name-select-btn { 
+            background: #f1f5f9; 
+            color: var(--text-main); 
+            border: 1px solid #cbd5e1; 
+            margin: 0 8px 8px 0; 
+            font-weight: 500;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .name-select-btn:hover { background: #e2e8f0; border-color: #94a3b8; }
+        .name-select-btn.active { 
+            background: var(--success); 
+            color: white; 
+            border-color: var(--success); 
+        }
+        
+        .hidden { display: none !important; }
+        
+        /* =========================================
+           POLISHED TABLE STYLING
+           ========================================= */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 30px;
             border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .final-score {
-            font-size: 3em;
-            font-weight: bold;
-            color: var(--secondary-color);
-            margin: 10px 0;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
         
-        .meta-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
+        .data-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            table-layout: auto; 
         }
-        .meta-info input, .meta-info select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-family: inherit;
+        
+        .data-table th, .data-table td { 
+            padding: 14px 16px; 
+            border-bottom: 1px solid var(--border-color); 
+            text-align: left; 
+            font-size: 14px;
+            vertical-align: top;
+            word-wrap: break-word;
+        }
+        
+        .data-table th { 
+            background: var(--table-header-bg); 
+            width: 35%; 
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase; 
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+        
+        .schedule-date-row td {
+            background-color: #e2e8f0 !important;
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 1.05rem;
+            letter-spacing: 0.3px;
         }
 
-        .btn-print {
-            background-color: var(--secondary-color);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            font-size: 1.1em;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 100%;
-            font-weight: bold;
+        .data-table tr:nth-child(even) td { background-color: var(--table-row-alt); }
+        .data-table tr:hover td { background-color: #f1f5f9; transition: background-color 0.15s; }
+        .data-table tr:last-child th, .data-table tr:last-child td { border-bottom: none; }
+        
+        .pdf-page-break {
+            page-break-before: always;
+            break-before: page;
+            margin-top: 20px;
         }
-        .btn-print:hover { opacity: 0.9; }
 
         @media print {
-            body { background-color: white; margin: 0; padding: 0; }
-            .btn-print { display: none; }
-            .section, .instructions, .final-summary { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid;}
+            .no-print { display: none !important; }
+        }
+
+        #printable-area { padding: 5px 0; }
+
+        .narrative-card {
+            background: #f0f9ff;
+            border-left: 6px solid #0ea5e9;
+            padding: 18px 20px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 25px;
+            color: #0369a1;
+        }
+        .narrative-card h3 { 
+            color: #075985; 
+            margin-top: 0; 
+            margin-bottom: 10px;
+            font-size: 1.25em;
+            border-bottom: none;
+            padding-bottom: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .narrative-card p { margin: 6px 0; font-size: 1.05rem; color: #0c4a6e; }
+        .highlight-time {
+            font-size: 1.15em;
+            font-weight: 700;
+            color: #b91c1c;
+            background: #ffffff;
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid #fecaca;
+            display: inline-block;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .notice-action-bar {
+            margin-top: 15px;
+            display: flex;
+            justify-content: flex-start;
+        }
+        
+        /* =========================================
+           MOBILE SPECIFIC ADJUSTMENTS 
+           ========================================= */
+        @media (max-width: 600px) {
+            body { padding: 12px 10px; }
+            .card { padding: 20px 15px; border-radius: 10px;}
+            
+            .lang-selector-wrapper {
+                position: relative;
+                top: 0;
+                right: 0;
+                margin-bottom: 15px;
+                display: flex;
+                justify-content: flex-end;
+            }
+            h2 { padding-right: 0; }
+            
+            button.action-btn, button.pdf-btn { width: 100%; font-size: 16px; padding: 14px;}
+            .pdf-action-container { justify-content: stretch; }
+            
+            .name-select-btn {
+                display: block;
+                width: 100%;
+                margin: 0 0 10px 0;
+                padding: 14px;
+                font-size: 16px;
+            }
+
+            .data-table th, .data-table td { padding: 12px 10px; }
+            .narrative-card { padding: 15px; }
         }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>INSTRUMENTO PARA ENTREVISTA</h1>
-        <p>para el Nombramiento del Rector de la Universidad de Montemorelos</p>
+<div class="card">
+    <div class="lang-selector-wrapper">
+        <select class="lang-selector" id="lang-selector" onchange="changeLanguage()">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+            <option value="fr">Français</option>
+        </select>
     </div>
 
-    <div class="instructions">
-        <h3>Matriz de Puntuación Confidencial</h3>
-        <div class="meta-info">
-            <div>
-                <label><strong>Nombre del Candidato:</strong></label>
-                <input type="text" placeholder="Escriba el nombre aquí">
-            </div>
-            <div>
-                <label><strong>Fecha de la entrevista:</strong></label>
-                <input type="date">
-            </div>
-            <div>
-                <label><strong>Nombre del Evaluador:</strong></label>
-                <input type="text" placeholder="Su nombre">
-            </div>
-            <div>
-                <label><strong>Recomendación General:</strong></label>
-                <select id="finalRecommendation">
-                    <option value="">-- Seleccione una opción --</option>
-                    <option value="Altamente recomendado">Altamente recomendado</option>
-                    <option value="Recomendado">Recomendado</option>
-                    <option value="Recomendado con condiciones">Recomendado con condiciones</option>
-                    <option value="No recomendado">No recomendado</option>
-                </select>
-            </div>
-        </div>
-        <hr>
-        <h3>Escala de Evaluación (Secciones I, II, III)</h3>
-        <p><strong>1</strong>: Nivel bajo, no cumple con los criterios esperados.<br>
-           <strong>2</strong>: Nivel Básico, cumple parcialmente. Muestra comprensión limitada.<br>
-           <strong>3</strong>: Nivel competente, satisfactorio, cumple adecuadamente.<br>
-           <strong>4</strong>: Nivel sobresaliente. Supera las expectativas.</p>
+    <h2 id="ui-title">Attendee Departure Search</h2>
+    <p id="ui-desc">Search for your name to retrieve your departure information and hotel departure schedule.</p>
+    
+    <div id="file-upload-section" class="hidden">
+        <p class="error-text" id="ui-notice"><strong>Notice:</strong> Browser security prevented auto-loading. Please select the file manually.</p>
+        <label for="excel-file" id="ui-select-file">Select <strong>departures.xlsx</strong>:</label><br>
+        <input type="file" id="excel-file" accept=".xlsx, .xls">
     </div>
 
-    <form id="evalForm">
-        <div class="section">
-            <h2>I. Liderazgo Espiritual y Misión Adventista (Valor: 40%)</h2>
-            
-            <div class="question">
-                <span class="question-title">1. Compromiso Personal</span>
-                <div class="question-desc">¿Cómo describiría su vida espiritual personal y de qué manera esta se refleja en su liderazgo diario?</div>
-                <div class="options">
-                    <label class="option-label"><input type="radio" name="s1q1" value="1" required> 1</label>
-                    <label class="option-label"><input type="radio" name="s1q1" value="2"> 2</label>
-                    <label class="option-label"><input type="radio" name="s1q1" value="3"> 3</label>
-                    <label class="option-label"><input type="radio" name="s1q1" value="4"> 4</label>
-                </div>
-            </div>
+    <div id="search-section" class="hidden">
+        <input type="text" id="search-input" placeholder="Type your name to search..." autocomplete="off">
+        <div id="search-results"></div>
+    </div>
+</div>
 
-            <div class="question">
-                <span class="question-title">2. Visión y Misión</span>
-                <div class="question-desc">¿Cómo ha articulado e implementado la misión institucional en sus roles anteriores, alineándola con la misión de la Iglesia?</div>
-                <div class="options">
-                    <label class="option-label"><input type="radio" name="s1q2" value="1" required> 1</label>
-                    <label class="option-label"><input type="radio" name="s1q2" value="2"> 2</label>
-                    <label class="option-label"><input type="radio" name="s1q2" value="3"> 3</label>
-                    <label class="option-label"><input type="radio" name="s1q2" value="4"> 4</label>
-                </div>
-            </div>
+<div id="export-section" class="hidden card">
+    <div id="printable-area"></div>
+    
+    <div class="pdf-action-container">
+        <button class="action-btn pdf-btn" id="btn-pdf" onclick="downloadPDF()">📄 Download as PDF</button>
+    </div>
+</div>
 
-            <div class="question">
-                <span class="question-title">3. Integración de fe y Aprendizaje</span>
-                <div class="question-desc">¿Puede compartir una experiencia concreta donde haya integrado exitosamente la fe con la excelencia académica en una institución educativa?</div>
-                <div class="options">
-                    <label class="option-label"><input type="radio" name="s1q3" value="1" required> 1</label>
-                    <label class="option-label"><input type="radio" name="s1q3" value="2"> 2</label>
-                    <label class="option-label"><input type="radio" name="s1q3" value="3"> 3</label>
-                    <label class="option-label"><input type="radio" name="s1q3" value="4"> 4</label>
-                </div>
-            </div>
+<script>
+    const i18n = {
+        en: {
+            title: "Attendee Departure Search",
+            desc: "Search for your name to retrieve your departure information and hotel departure schedule.",
+            searchPlaceholder: "Type your name to search...",
+            fallbackNotice: "<strong>Notice:</strong> Browser security prevented auto-loading. Please select the file manually.",
+            selectFile: "Select <strong>departures.xlsx</strong>:",
+            copyBtn: "📋 Copy to Clipboard",
+            pdfBtn: "📄 Download as PDF",
+            noMatches: "No matches found.",
+            recordMatch: "Record Match",
+            attendeeParticulars: "Attendee Particulars (Tab: {tab})",
+            hotelNoticeTitle: "🚐 Hotel Departure Notice",
+            flightBasedOn: "Based on your flight scheduled for <strong>{time}</strong> on <strong>{date}</strong>:",
+            meetAt: "Please meet transportation in the hotel lobby at",
+            flightScheduledFor: "Your flight is scheduled for <strong>{time}</strong> on <strong>{date}</strong>.",
+            checkScheduleBelow: "Please check the Hotel Departure Schedule below to find your specific hotel departure time.",
+            hotelScheduleTitle: "Hotel Departure Schedule",
+            excelEmpty: "Excel file is empty.",
+            unknown: "Unknown",
+            clipNotice: "--- 🚐 HOTEL DEPARTURE NOTICE ---",
+            clipFlight: "Flight: {date} at {time}",
+            clipMeet: "TRANSPORTATION MEETS IN LOBBY AT: {time}",
+            clipParticulars: "--- Attendee Particulars ---"
+        },
+        es: {
+            title: "Búsqueda de Salida de Asistentes",
+            desc: "Busque su nombre para recuperar su información de salida y el horario de salida del hotel.",
+            searchPlaceholder: "Escriba su nombre para buscar...",
+            fallbackNotice: "<strong>Aviso:</strong> La seguridad del navegador impidió la carga automática. Seleccione el archivo manualmente.",
+            selectFile: "Seleccione <strong>departures.xlsx</strong>:",
+            copyBtn: "📋 Copiar al Portapapeles",
+            pdfBtn: "📄 Descargar como PDF",
+            noMatches: "No se encontraron coincidencias.",
+            recordMatch: "Coincidencia de Registro",
+            attendeeParticulars: "Detalles del Asistente (Pestaña: {tab})",
+            hotelNoticeTitle: "🚐 Aviso de Salida del Hotel",
+            flightBasedOn: "Basado en su vuelo programado para las <strong>{time}</strong> el <strong>{date}</strong>:",
+            meetAt: "Por favor, reúnase con el transporte en el lobby del hotel a las",
+            flightScheduledFor: "Su vuelo está programado para las <strong>{time}</strong> el <strong>{date}</strong>.",
+            checkScheduleBelow: "Por favor, consulte el Horario de Salida del Hotel a continuación para encontrar su hora específica de salida del hotel.",
+            hotelScheduleTitle: "Horario de Salida del Hotel",
+            excelEmpty: "El archivo Excel está vacío.",
+            unknown: "Desconocido",
+            clipNotice: "--- 🚐 AVISO DE SALIDA DEL HOTEL ---",
+            clipFlight: "Vuelo: {date} a las {time}",
+            clipMeet: "EL TRANSPORTE SE REÚNE EN EL LOBBY A LAS: {time}",
+            clipParticulars: "--- Detalles del Asistente ---"
+        },
+        fr: {
+            title: "Recherche de Départ des Participants",
+            desc: "Recherchez votre nom pour récupérer vos informations de départ et l'horaire de départ de l'hôtel.",
+            searchPlaceholder: "Tapez votre nom pour rechercher...",
+            fallbackNotice: "<strong>Avis:</strong> La sécurité du navigateur a empêché le chargement automatique. Veuillez sélectionner le fichier manuellement.",
+            selectFile: "Sélectionnez <strong>departures.xlsx</strong>:",
+            copyBtn: "📋 Copier dans le Presse-papiers",
+            pdfBtn: "📄 Télécharger en PDF",
+            noMatches: "Aucun résultat trouvé.",
+            recordMatch: "Correspondance de Dossier",
+            attendeeParticulars: "Détails du Participant (Onglet: {tab})",
+            hotelNoticeTitle: "🚐 Avis de Départ de l'Hôtel",
+            flightBasedOn: "Basé sur votre vol prévu à <strong>{time}</strong> le <strong>{date}</strong>:",
+            meetAt: "Veuillez rejoindre le transport dans le hall de l'hôtel à",
+            flightScheduledFor: "Votre vol est prévu à <strong>{time}</strong> le <strong>{date}</strong>.",
+            checkScheduleBelow: "Veuillez consulter l'horaire de départ de l'hôtel ci-dessous pour trouver votre heure de départ spécifique.",
+            hotelScheduleTitle: "Horaire de Départ de l'Hôtel",
+            excelEmpty: "Le fichier Excel est vide.",
+            unknown: "Inconnu",
+            clipNotice: "--- 🚐 AVIS DE DÉPART DE L'HÔTEL ---",
+            clipFlight: "Vol: {date} à {time}",
+            clipMeet: "LE TRANSPORT SE RÉUNIT DANS LE HALL À: {time}",
+            clipParticulars: "--- Détails du Participant ---"
+        }
+    };
 
-            <div class="question">
-                <span class="question-title">4. Relaciones Denominacionales</span>
-                <div class="question-desc">¿Cómo ha trabajado con diferentes niveles de la organización eclesiástica (División, Unión, etc.) para fortalecer la misión institucional?</div>
-                <div class="options">
-                    <label class="option-label"><input type="radio" name="s1q4" value="1" required> 1</label>
-                    <label class="option-label"><input type="radio" name="s1q4" value="2"> 2</label>
-                    <label class="option-label"><input type="radio" name="s1q4" value="3"> 3</label>
-                    <label class="option-label"><input type="radio" name="s1q4" value="4"> 4</label>
-                </div>
-            </div>
+    let currentLang = 'en';
+    const targetFileName = "departures.xlsx";
+    
+    let timelineTableHtmlOnly = ""; 
+    let timelineDataRaw = [];
+    let attendeesData = [];
+    let currentDisplayedData = ""; 
+    let activeMatchContext = null; 
 
-            <div class="question">
-                <span class="question-title">5. Gestión de la Identidad</span>
-                <div class="question-desc">¿Qué estrategias ha utilizado para preservar y fortalecer la identidad adventista en contextos desafiantes o seculares?</div>
-                <div class="options">
-                    <label class="option-label"><input type="radio" name="s1q5" value="1" required> 1</label>
-                    <label class="option-label"><input type="radio" name="s1q5" value="2"> 2</label>
-                    <label class="option-label"><input type="radio" name="s1q5" value="3"> 3</label>
-                    <label class="option-label"><input type="radio" name="s1q5" value="4"> 4</label>
-                </div>
-            </div>
-            
-            <div class="subtotal-box">Subtotal Sección I: <span id="sub1">0</span> / 20 puntos</div>
-        </div>
-
-        <div class="section">
-            <h2>II. Liderazgo Académico y Calidad Institucional (Valor: 30%)</h2>
-            
-            <div class="question">
-                <span class="question-title">1. Credenciales Académicas</span>
-                <div class="question-desc">¿Cómo ha contribuido su formación académica y experiencia investigativa al fortalecimiento de las instituciones donde ha servido?</div>
-                <div class="options">
-                    <label class="option-label"><input type="radio" name="s2q1" value="1" required> 1</label>
-                    <label class="option-label"><input type="radio" name="s2q1" value="2"> 2</label>
-                    <label class="option-label"><input type="radio" name="s2q1" value="3"> 3</label>
-                    <label class="option-label"><input type="radio" name="s2q1" value="4"> 4</label>
-                </div>
-            </div>
-
-            <div class="question">
-                <span class="question-title">2. Calidad y Acreditación</span>
-                <div class="question-desc">¿Qué experiencia tiene en procesos de acreditación y cómo ha asegurado la mejora continua de los procesos administrativos?</div>
-                <div class="options">
-                    <label class="option-label"><input type="radio" name="s2q2" value="1" required> 1</label>
-                    <label class="option-label"><input type="radio" name="s2q2" value="2"> 2</label>
-                    <label class="option-label"><input type="radio" name="s2q2" value="3"> 3</label>
-                    <label class="option-label"><input type="radio" name="s2q2" value="4"> 4</label>
-                </div>
-            </div>
-
-            <div class="question">
-                <span class="question-title">3. Visión de Integración</span>
-                <div class="question-desc">¿Cuál es su visión para una institución que integra educación superior y servicios de salud?</div>
-                <div class="options">
-                    <label class="option-label"><input type="radio" name="s2q3" value="1" required> 1</label>
-                    <label class="option-label"><input type="radio" name="s2q3" value="2"> 2</label>
-                    <label class="option-label"><input type="radio" name="s2q3" value="3"> 3</label>
-                    <label class="option-label"><input type="radio" name="s2q3" value="4"> 4</label>
-                </div>
-            </div>
-
-            <div class="question">
-                <span class="question-title">4. Desarrollo Curricular e Innovación</span>
-                <div class="question-desc">¿Cómo garantizaría el equilibrio entre excelencia académica, calidad clínica y sostenibilidad financiera?</div>
-                <div class="options">
-                    <label class="option-label"><input type="radio" name="s2q4" value="1" required> 1</label>
-                    <label class="option-label"><input type="radio" name="s2q4" value="2"> 2</label>
-                    <label class="option-label"><input type="radio" name="s2q4" value="3"> 3</label>
-                    <label class="option-label"><input type="radio" name="s2q4" value="4"> 4</label>
-                </div>
-            </div>
-
-            <div class="question">
-                <span class="question-title">5. Desarrollo del Profesorado</span>
-                <div class="question-desc">¿Qué estrategias ha implementado para desarrollar y fortalecer al cuerpo docente?</div>
-                <div class="options">
-                    <label class="option-label"><input type="radio" name="s2q5" value="1" required> 1</label>
-                    <label class="option-label"><input type="radio" name="s2q5" value="2"> 2</label>
-                    <label class="option-label"><input type="radio" name="s2q5" value="3"> 3</label>
-                    <label class="option-label"><input type="radio" name="s2q5" value="4"> 4</label>
-                </div>
-            </div>
-
-            <div class="question">
-                <span class="question-title">6. Éxito estudiantil</span>
-                <div class="question-desc">¿Cómo ha trabajado para mejorar la retención, graduación e inserción laboral de los estudiantes?</div>
-                <div class="options">
-                    <label class="option-label"><input type="radio" name="s2q6" value="1" required> 1</label>
-                    <label class="option-label"><input type="radio" name="s2q6" value="2"> 2</label>
-                    <label class="option-label"><input type="radio" name="s2q6" value="3"> 3</label>
-                    <label class="option-label"><input type="radio" name="s2q6" value="4"> 4</label>
-                </div>
-            </div>
-            
-            <div class="subtotal-box">Subtotal Sección II: <span id="sub2">0</span> / 24 puntos</div>
-        </div>
-
-        <div class="section">
-            <h2>III. Liderazgo Administrativo y Financiero (Valor: 20%)</h2>
-            
-            <div class="question">
-                <span class="question-title">1. Gestión Financiera</span>
-                <div class="question-desc">¿Puede describir su experiencia administrando presupuestos y generando nuevas fuentes de ingresos?</div>
-                <div class="options">
-                    <label class="option-label"><input type="radio" name="s3q1" value="1" required> 1</label>
-                    <label class="option-label"><input type="radio" name="s3q1" value="2"> 2</label>
-                    <label class="option-label"><input type="radio" name="s3q1" value="3"> 3</label>
-                    <label class="option-label"><input type="radio" name="s3q1" value="4"> 4</label>
-                </div>
-            </div>
-
-            <div class="question">
-                <span class="question-title">2. Planificación Estratégica</span>
-                <div class="question-desc">¿Cómo ha liderado procesos de planificación estratégica y asegurado su implementación efectiva?</div>
-                <div class="options">
-                    <label class="option-label"><input type="radio" name="s3q2" value="1" required> 1</label>
-                    <label class="option-label"><input type="radio" name="s3q2" value="2"> 2</label>
-                    <label class="option-label"><input type="radio" name="s3q2" value="3"> 3</label>
-                    <label class="option-label"><input type="radio" name="s3q2" value="4"> 4</label>
-                </div>
-            </div>
-
-            <div class="question">
-                <span class="question-title">3. Gestión de Recursos Humanos</span>
-                <div class="question-desc">¿Cómo maneja el liderazgo de equipos y la resolución de conflictos dentro del personal?</div>
-                <div class="options">
-                    <label class="option-label"><input type="radio" name="s3q3" value="1" required> 1</label>
-                    <label class="option-label"><input type="radio" name="s3q3" value="2"> 2</label>
-                    <label class="option-label"><input type="radio" name="s3q3" value="3"> 3</label>
-                    <label class="option-label"><input type="radio" name="s3q3" value="4"> 4</label>
-                </div>
-            </div>
-
-            <div class="question">
-                <span class="question-title">4. Manejo de Crisis</span>
-                <div class="question-desc">Cuéntenos sobre una crisis que haya enfrentado y cómo la gestionó.</div>
-                <div class="options">
-                    <label class="option-label"><input type="radio" name="s3q4" value="1" required> 1</label>
-                    <label class="option-label"><input type="radio" name="s3q4" value="2"> 2</label>
-                    <label class="option-label"><input type="radio" name="s3q4" value="3"> 3</label>
-                    <label class="option-label"><input type="radio" name="s3q4" value="4"> 4</label>
-                </div>
-            </div>
-
-            <div class="question">
-                <span class="question-title">5. Visión estratégica institucional</span>
-                <div class="question-desc">¿Cuál es su visión para el futuro de la Universidad de Montemorelos y cómo planea alcanzarla?</div>
-                <div class="options">
-                    <label class="option-label"><input type="radio" name="s3q5" value="1" required> 1</label>
-                    <label class="option-label"><input type="radio" name="s3q5" value="2"> 2</label>
-                    <label class="option-label"><input type="radio" name="s3q5" value="3"> 3</label>
-                    <label class="option-label"><input type="radio" name="s3q5" value="4"> 4</label>
-                </div>
-            </div>
-            
-            <div class="subtotal-box">Subtotal Sección III: <span id="sub3">0</span> / 20 puntos</div>
-        </div>
-
-        <div class="section">
-            <h2>IV. Habilidades interpersonales y de desarrollo (Valor: 10%)</h2>
-            <p><em>(1) La respuesta no satisface los criterios; (2) La respuesta es adecuada.</em></p>
-            
-            <div class="question">
-                <span class="question-title">1. Comunicación y presentación</span>
-                <div class="question-desc">¿Cómo adapta su comunicación según las diferentes audiencias con las que interactúa?</div>
-                <div class="options">
-                    <label class="option-label"><input type="radio" name="s4q1" value="1" required> 1 (No satisface)</label>
-                    <label class="option-label"><input type="radio" name="s4q1" value="2"> 2 (Adecuada)</label>
-                </div>
-            </div>
-
-            <div class="question">
-                <span class="question-title">2. Recaudación de Fondos</span>
-                <div class="question-desc">¿Qué experiencia tiene en la obtención de fondos y desarrollo de proyectos institucionales?</div>
-                <div class="options">
-                    <label class="option-label"><input type="radio" name="s4q2" value="1" required> 1 (No satisface)</label>
-                    <label class="option-label"><input type="radio" name="s4q2" value="2"> 2 (Adecuada)</label>
-                </div>
-            </div>
-
-            <div class="question">
-                <span class="question-title">3. Relaciones Comunitarias</span>
-                <div class="question-desc">¿Cómo ha fortalecido las relaciones entre la institución y la comunidad externa?</div>
-                <div class="options">
-                    <label class="option-label"><input type="radio" name="s4q3" value="1" required> 1 (No satisface)</label>
-                    <label class="option-label"><input type="radio" name="s4q3" value="2"> 2 (Adecuada)</label>
-                </div>
-            </div>
-
-            <div class="question">
-                <span class="question-title">4. Liderazgo Colaborativo</span>
-                <div class="question-desc">¿Cómo promueve un liderazgo participativo dentro de su equipo?</div>
-                <div class="options">
-                    <label class="option-label"><input type="radio" name="s4q4" value="1" required> 1 (No satisface)</label>
-                    <label class="option-label"><input type="radio" name="s4q4" value="2"> 2 (Adecuada)</label>
-                </div>
-            </div>
-
-            <div class="question">
-                <span class="question-title">5. Adaptabilidad al Cambio</span>
-                <div class="question-desc">¿Cómo ha liderado procesos de cambio en contextos complejos o inciertos?</div>
-                <div class="options">
-                    <label class="option-label"><input type="radio" name="s4q5" value="1" required> 1 (No satisface)</label>
-                    <label class="option-label"><input type="radio" name="s4q5" value="2"> 2 (Adecuada)</label>
-                </div>
-            </div>
-
-            <div class="question">
-                <span class="question-title">6. Transformación Institucional</span>
-                <div class="question-desc">¿Cómo ha manejado procesos de transformación institucional o cambio cultural?</div>
-                <div class="options">
-                    <label class="option-label"><input type="radio" name="s4q6" value="1" required> 1 (No satisface)</label>
-                    <label class="option-label"><input type="radio" name="s4q6" value="2"> 2 (Adecuada)</label>
-                </div>
-            </div>
-            
-            <div class="subtotal-box">Subtotal Sección IV: <span id="sub4">0</span> / 12 puntos</div>
-        </div>
-
-        <div class="final-summary">
-            <h2>Puntuación Final Ponderada</h2>
-            <div class="final-score"><span id="finalTotal">0.0</span> / 100</div>
-            <p>Calculado en base a pesos: I (40%), II (30%), III (20%), IV (10%)</p>
-        </div>
+    function changeLanguage() {
+        currentLang = document.getElementById('lang-selector').value;
+        const langData = i18n[currentLang];
         
-        <div class="section">
-            <h2>Observaciones y Notas Finales</h2>
-            <textarea style="width: 100%; height: 100px; padding: 10px; font-family: inherit; border: 1px solid var(--border-color); border-radius: 4px;" placeholder="Escriba cualquier observación adicional aquí..."></textarea>
-        </div>
-
-        <button type="button" class="btn-print" onclick="window.print()">Imprimir o Guardar como PDF</button>
-
-    </form>
-
-    <script>
-        // Logic to calculate subtotals and the final weighted score
-        const form = document.getElementById('evalForm');
+        document.getElementById('ui-title').innerText = langData.title;
+        document.getElementById('ui-desc').innerText = langData.desc;
+        document.getElementById('search-input').placeholder = langData.searchPlaceholder;
+        document.getElementById('ui-notice').innerHTML = langData.fallbackNotice;
+        document.getElementById('ui-select-file').innerHTML = langData.selectFile;
+        document.getElementById('btn-pdf').innerText = langData.pdfBtn;
         
-        // Define max possible points for each section
-        const maxS1 = 20; // 5 questions * 4 max points
-        const maxS2 = 24; // 6 questions * 4 max points
-        const maxS3 = 20; // 5 questions * 4 max points
-        const maxS4 = 12; // 6 questions * 2 max points
+        document.querySelectorAll('.copy-btn-dynamic').forEach(btn => {
+            btn.innerText = langData.copyBtn;
+        });
 
-        function calculateScore() {
-            let s1 = 0, s2 = 0, s3 = 0, s4 = 0;
-
-            // Gather all checked radio buttons
-            const data = new FormData(form);
-            for (let [name, value] of data.entries()) {
-                let numValue = parseInt(value) || 0;
-                if (name.startsWith('s1')) s1 += numValue;
-                if (name.startsWith('s2')) s2 += numValue;
-                if (name.startsWith('s3')) s3 += numValue;
-                if (name.startsWith('s4')) s4 += numValue;
-            }
-
-            // Update UI Subtotals
-            document.getElementById('sub1').textContent = s1;
-            document.getElementById('sub2').textContent = s2;
-            document.getElementById('sub3').textContent = s3;
-            document.getElementById('sub4').textContent = s4;
-
-            // Calculate weighted final score (normalized to 100%)
-            // Weighting: S1=40%, S2=30%, S3=20%, S4=10%
-            let weightedS1 = (s1 / maxS1) * 40;
-            let weightedS2 = (s2 / maxS2) * 30;
-            let weightedS3 = (s3 / maxS3) * 20;
-            let weightedS4 = (s4 / maxS4) * 10;
-
-            // If a section has no answers yet, treat it as 0 to avoid NaN, 
-            // but normally it will just be 0 if unselected.
-            let finalTotal = (weightedS1 || 0) + (weightedS2 || 0) + (weightedS3 || 0) + (weightedS4 || 0);
-
-            // Update UI Final Score (rounded to 1 decimal place)
-            document.getElementById('finalTotal').textContent = finalTotal.toFixed(1);
+        const searchInput = document.getElementById('search-input');
+        if (searchInput.value.length >= 2) {
+            searchInput.dispatchEvent(new Event('input'));
         }
 
-        // Attach event listener to update whenever an option is clicked
-        form.addEventListener('change', calculateScore);
-    </script>
+        if (activeMatchContext && !document.getElementById('export-section').classList.contains('hidden')) {
+            displayData(activeMatchContext, false); 
+        }
+    }
+
+    window.onload = async () => {
+        try {
+            const response = await fetch(targetFileName);
+            if (!response.ok) throw new Error("Fetch failed");
+            const arrayBuffer = await response.arrayBuffer();
+            processExcel(arrayBuffer);
+        } catch (e) {
+            console.warn("Could not auto-fetch " + targetFileName + ". Showing file input fallback.");
+            document.getElementById('file-upload-section').classList.remove('hidden');
+        }
+    };
+
+    document.getElementById('excel-file').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => processExcel(evt.target.result);
+        reader.readAsArrayBuffer(file);
+    });
+
+    function processExcel(data) {
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetNames = workbook.SheetNames;
+        
+        if (sheetNames.length === 0) return alert(i18n[currentLang].excelEmpty);
+
+        const timelineSheet = workbook.Sheets[sheetNames[0]];
+        timelineDataRaw = XLSX.utils.sheet_to_json(timelineSheet, { header: 1, raw: false });
+        
+        timelineTableHtmlOnly = `<div class="table-responsive"><table class='data-table'>`;
+        timelineDataRaw.forEach(row => {
+            if (row.length > 0) {
+                const cell0 = String(row[0] || "").trim();
+                const cell1 = String(row[1] || "").trim();
+                const isDateRow = (row.length === 1 || cell1 === "") && cell0 !== "" && !cell0.toLowerCase().includes('flight');
+
+                if (isDateRow) {
+                    timelineTableHtmlOnly += `<tr class="schedule-date-row"><td colspan="2">${cell0}</td></tr>`;
+                } else {
+                    timelineTableHtmlOnly += "<tr>";
+                    row.forEach(cell => {
+                        timelineTableHtmlOnly += `<td>${cell !== undefined ? cell : ''}</td>`;
+                    });
+                    timelineTableHtmlOnly += "</tr>";
+                }
+            }
+        });
+        timelineTableHtmlOnly += "</table></div>";
+
+        attendeesData = [];
+        for (let i = 1; i < sheetNames.length; i++) {
+            const sheet = workbook.Sheets[sheetNames[i]];
+            const sheetData = XLSX.utils.sheet_to_json(sheet, { raw: false });
+            sheetData.forEach(row => {
+                attendeesData.push({ sheetName: sheetNames[i], data: row });
+            });
+        }
+
+        document.getElementById('file-upload-section').classList.add('hidden');
+        document.getElementById('search-section').classList.remove('hidden');
+    }
+
+    document.getElementById('search-input').addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        const resultsContainer = document.getElementById('search-results');
+        
+        resultsContainer.innerHTML = "";
+        document.getElementById('export-section').classList.add('hidden');
+        
+        if (query.length < 2) return; 
+
+        const matches = attendeesData.filter(att => 
+            Object.values(att.data).some(val => String(val).toLowerCase().includes(query))
+        );
+
+        if (matches.length === 0) {
+            resultsContainer.innerHTML = `<p>${i18n[currentLang].noMatches}</p>`;
+            return;
+        }
+
+        matches.forEach((match, index) => {
+            let nameLabel = i18n[currentLang].recordMatch + " " + (index + 1);
+            for (const [key, value] of Object.entries(match.data)) {
+                if (key.toLowerCase().includes('name') || key.toLowerCase().includes('nombres')) {
+                    nameLabel = value;
+                    break;
+                }
+            }
+            
+            const btn = document.createElement('button');
+            btn.className = "name-select-btn";
+            btn.textContent = nameLabel;
+            btn.onclick = (event) => {
+                resultsContainer.innerHTML = "";
+                resultsContainer.appendChild(btn);
+                btn.classList.add('active');
+                displayData(match, true); 
+            };
+            resultsContainer.appendChild(btn);
+        });
+        
+        if (activeMatchContext && !document.getElementById('export-section').classList.contains('hidden')) {
+            const activeBtn = Array.from(document.querySelectorAll('.name-select-btn')).find(b => b.textContent === getMatchName(activeMatchContext));
+            if (activeBtn) activeBtn.classList.add('active');
+        }
+    });
+
+    function getMatchName(match) {
+        for (const [key, value] of Object.entries(match.data)) {
+            if (key.toLowerCase().includes('name') || key.toLowerCase().includes('nombres')) return value;
+        }
+        return "";
+    }
+
+    function parseSingleTime(timeStr) {
+        if (!timeStr) return null;
+        let str = String(timeStr).trim().toLowerCase().replace(/\./g, '');
+        str = str.replace(/12:00\s*m/, '12:00 pm');
+        
+        let match = str.match(/(\d+):(\d+)\s*(am|pm)/);
+        if (!match) return null;
+        
+        let h = parseInt(match[1], 10);
+        let m = parseInt(match[2], 10);
+        let p = match[3];
+        
+        return (p === 'pm' && h !== 12 ? h + 12 : (p === 'am' && h === 12 ? 0 : h)) * 60 + m;
+    }
+
+    function parseTimeRange(rangeStr) {
+        let parts = rangeStr.split('-');
+        if (parts.length !== 2) return null;
+        
+        let startStr = parts[0].trim().toLowerCase().replace(/\./g, '');
+        let endStr = parts[1].trim().toLowerCase().replace(/\./g, '');
+        
+        startStr = startStr.replace(/12:00\s*m/, '12:00 pm');
+        endStr = endStr.replace(/12:00\s*m/, '12:00 pm');
+        
+        let startMatch = startStr.match(/(\d+):(\d+)\s*(am|pm)?/);
+        let endMatch = endStr.match(/(\d+):(\d+)\s*(am|pm)?/);
+        
+        if (!startMatch || !endMatch) return null;
+        
+        let startH = parseInt(startMatch[1], 10);
+        let startM = parseInt(startMatch[2], 10);
+        let startP = startMatch[3];
+        
+        let endH = parseInt(endMatch[1], 10);
+        let endM = parseInt(endMatch[2], 10);
+        let endP = endMatch[3];
+        
+        if (!endP) {
+            if (endH === 12) endP = 'pm'; else endP = startP || 'am';
+        }
+        if (!startP) {
+            if (startH === 12) startP = 'pm'; else startP = endP || 'am';
+        }
+        
+        let start = (startP === 'pm' && startH !== 12 ? startH + 12 : (startP === 'am' && startH === 12 ? 0 : startH)) * 60 + startM;
+        let end = (endP === 'pm' && endH !== 12 ? endH + 12 : (endP === 'am' && endH === 12 ? 0 : endH)) * 60 + endM;
+        
+        if (end < start && end + 12 * 60 >= start) end += 12 * 60;
+        
+        return { start, end };
+    }
+
+    // Intelligent Time Matcher with "Closest Earlier Time" Fallback
+    function findDepartureInfo(attDate, attTime) {
+        if (!attDate || !attTime) return null;
+        
+        const flightTime = parseSingleTime(attTime);
+        if (flightTime === null) return null;
+        
+        let numbers = [];
+        let words = [];
+        String(attDate).toLowerCase().split(/[-/\s,]+/).forEach(p => {
+            if (!isNaN(p) && p.trim() !== '') numbers.push(p);
+            else if (p.length >= 3) words.push(p.substring(0, 3));
+        });
+        
+        let currentDateContext = "";
+        let dayValidRanges = []; // Store parsed ranges and corresponding hotel departure times for this date
+        
+        for (let i = 0; i < timelineDataRaw.length; i++) {
+            const row = timelineDataRaw[i];
+            
+            if (row.length > 0) {
+                const cell0 = String(row[0]).trim();
+                const cell1 = row[1] !== undefined ? String(row[1]).trim() : "";
+                
+                if ((row.length === 1 || cell1 === "") && cell0 !== "" && !cell0.toLowerCase().includes('flight')) {
+                    currentDateContext = cell0.toLowerCase();
+                    continue;
+                }
+                
+                if (row.length >= 2) {
+                    const rangeStr = String(row[0]);
+                    const depTimeStr = String(row[1]);
+                    
+                    if (rangeStr.toLowerCase().includes("flight") || rangeStr.toLowerCase().includes("departure")) continue;
+                    
+                    let dateMatch = true;
+                    if (words.length > 0 && !currentDateContext.includes(words[0])) dateMatch = false;
+                    if (numbers.length > 0 && !numbers.some(n => currentDateContext.includes(n))) dateMatch = false;
+                    if (!dateMatch) continue;
+                    
+                    const range = parseTimeRange(rangeStr);
+                    if (range) {
+                        dayValidRanges.push({ start: range.start, end: range.end, depTime: depTimeStr });
+                    }
+                }
+            }
+        }
+        
+        if (dayValidRanges.length === 0) return null;
+
+        // 1. First, check for an exact bracket match
+        for (let item of dayValidRanges) {
+            if (flightTime >= item.start && flightTime <= item.end) {
+                return item.depTime;
+            }
+        }
+
+        // 2. Fallback: Find the closest earlier time bracket (delta where range end <= flight time)
+        let closestEarlier = null;
+        let minDelta = Infinity;
+
+        for (let item of dayValidRanges) {
+            // Check if this range is earlier than or equal to the flight time
+            if (item.end <= flightTime) {
+                let delta = flightTime - item.end;
+                if (delta < minDelta) {
+                    minDelta = delta;
+                    closestEarlier = item.depTime;
+                }
+            }
+        }
+
+        if (closestEarlier !== null) {
+            return closestEarlier;
+        }
+
+        // 3. Absolute fallback: Return the very first departure time of that day if flight is earlier than all ranges
+        return dayValidRanges[0].depTime;
+    }
+
+    function displayData(match, shouldScroll = false) {
+        activeMatchContext = match; 
+        const langData = i18n[currentLang];
+
+        let attDate = "";
+        let attTime = "";
+        
+        const particularsTitle = langData.attendeeParticulars.replace("{tab}", match.sheetName);
+        let tableHtml = `<h3>${particularsTitle}</h3><div class="table-responsive"><table class="data-table">`;
+        let textForClipboard = ``;
+        
+        for (const [key, value] of Object.entries(match.data)) {
+            tableHtml += `<tr><th>${key}</th><td>${value}</td></tr>`;
+            if (key.toUpperCase().includes('DATE') || key.toUpperCase().includes('FECHA')) attDate = value;
+            if (key.toUpperCase().includes('TIME') || key.toUpperCase().includes('HORA')) attTime = value;
+        }
+        tableHtml += `</table></div>`;
+        
+        const exactDepartureTime = findDepartureInfo(attDate, attTime);
+        let narrativeHtml = `<div class="narrative-card" id="departure-notice-card">
+            <h3>${langData.hotelNoticeTitle}</h3>`;
+            
+        if (exactDepartureTime) {
+            const flightBasedHtml = langData.flightBasedOn.replace('{time}', attTime).replace('{date}', attDate);
+            narrativeHtml += `<p>${flightBasedHtml}</p>
+            <p>${langData.meetAt} <span class="highlight-time">${exactDepartureTime}</span>.</p>`;
+            
+            textForClipboard += `${langData.clipNotice}\n`;
+            textForClipboard += `${langData.clipFlight.replace('{date}', attDate).replace('{time}', attTime)}\n`;
+            textForClipboard += `${langData.clipMeet.replace('{time}', exactDepartureTime)}\n\n`;
+        } else {
+            const fallbackFlight = langData.flightScheduledFor.replace('{time}', attTime || langData.unknown).replace('{date}', attDate || langData.unknown);
+            narrativeHtml += `<p>${fallbackFlight}</p>
+            <p>${langData.checkScheduleBelow}</p>`;
+        }
+        
+        narrativeHtml += `<div class="notice-action-bar no-print">
+            <button class="action-btn copy-btn-dynamic" onclick="copyToClipboard()">${langData.copyBtn}</button>
+        </div>`;
+        
+        narrativeHtml += `</div>`;
+
+        textForClipboard += `${langData.clipParticulars}\n`;
+        for (const [key, value] of Object.entries(match.data)) {
+            textForClipboard += `${key}: ${value}\n`;
+        }
+
+        let screenHtml = narrativeHtml + tableHtml;
+        let pdfHtml = screenHtml + `<div class="pdf-page-break"></div>` + `<h3>${langData.hotelScheduleTitle}</h3>` + timelineTableHtmlOnly;
+
+        document.getElementById('printable-area').innerHTML = pdfHtml;
+        currentDisplayedData = textForClipboard;
+        
+        document.getElementById('export-section').classList.remove('hidden');
+
+        if (shouldScroll) {
+            const noticeCard = document.getElementById('departure-notice-card');
+            if (noticeCard) {
+                noticeCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+    }
+
+    function copyToClipboard() {
+        navigator.clipboard.writeText(currentDisplayedData).catch(err => {
+            console.error("Failed to copy data.", err);
+        });
+    }
+
+    function downloadPDF() {
+        const element = document.getElementById('printable-area');
+        const opt = {
+            margin:       [0.5, 0.5, 0.5, 0.5],
+            filename:     'Departure_Information.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true }, 
+            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save();
+    }
+</script>
+
 </body>
 </html>
