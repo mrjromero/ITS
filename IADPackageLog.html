@@ -8,7 +8,10 @@
   
   <style>
     body { font-family: system-ui, sans-serif; max-width: 1000px; margin: 2rem auto; padding: 0 1rem; color: #333; }
-    h1 { font-size: 1.8rem; }
+    
+    /* Header Styles */
+    .header-container { display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 15px; }
+    h1 { font-size: 1.8rem; margin: 0; }
     h2 { border-bottom: 2px solid #0052cc; padding-bottom: 0.5rem; margin-top: 2rem; font-size: 1.4rem; }
     
     form { background: #f4f5f7; padding: 1.5rem; border-radius: 6px; }
@@ -24,6 +27,8 @@
     .primary-btn:disabled { background: #a5c2f0; cursor: not-allowed; }
     .secondary-btn { background: #6c757d; color: white; }
     .secondary-btn:hover { background: #5a6268; }
+    .kiosk-btn { background: #28a745; color: white; }
+    .kiosk-btn:hover { background: #218838; }
     
     .table-controls { background: #f4f5f7; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
     .control-group { flex: 1; min-width: 150px; }
@@ -68,6 +73,8 @@
     .modal-details p { margin: 5px 0; font-size: 0.95em; }
 
     @media (max-width: 768px) {
+      .header-container { flex-direction: column; align-items: flex-start; }
+      .kiosk-btn { width: 100%; }
       .form-grid { grid-template-columns: 1fr; } 
       .full-width { grid-column: auto; }
       .btn-group { flex-direction: column; } 
@@ -85,7 +92,12 @@
 </head>
 <body>
 
-  <h1>IAD Package Log</h1>
+  <!-- NEW: Header Flex Container with Kiosk Button -->
+  <div class="header-container">
+    <h1>IAD Package Log</h1>
+    <button class="kiosk-btn" onclick="window.open('receive.html', '_blank')">📦 Open Sign-Out Kiosk</button>
+  </div>
+  
   <div id="statusMsg">Loading configuration...</div>
   
   <form id="dataForm">
