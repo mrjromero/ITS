@@ -135,8 +135,18 @@
 
   <h2>Package Inventory</h2>
   
-  <!-- NEW: Filter and Sort Controls -->
   <div class="table-controls">
+    <!-- NEW: Server-Side Time Range Filter -->
+    <div class="control-group">
+      <label>Time Range</label>
+      <select id="timeRange" onchange="loadData()">
+        <option value="3">Last 3 Months (Fast)</option>
+        <option value="6">Last 6 Months</option>
+        <option value="12">Last 1 Year</option>
+        <option value="all">All Time (Slower)</option>
+      </select>
+    </div>
+    
     <div class="control-group">
       <label>Search All Fields</label>
       <input type="text" id="searchInput" placeholder="Search..." onkeyup="renderTable()">
@@ -198,10 +208,8 @@
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbw_zV8BJ1Lcdnc36vSfhUUDxCpXOaYpa8H95eQQjP6iu33TfiilTgy247keK44gH_ZKfQ/exec";
     
-    // Global array to hold the downloaded sheet data
     let packageData = [];
 
-    // Set Default Datetime to current local time
     function setCurrentDateTime() {
       const now = new Date();
       now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -230,36 +238,34 @@
     }
     // ----------------------------
 
-    // Fetch data and store it in memory
+    // Fetch data with the Time Range Parameter attached
     async function loadData() {
       const tbody = document.getElementById('tableBody');
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Loading packages...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Fetching data from Google Sheets...</td></tr>';
       
       try {
-        const response = await fetch(API_URL);
+        const timeRange = document.getElementById('timeRange').value;
+        const fetchUrl = `${API_URL}?monthsBack=${timeRange}`;
+        
+        const response = await fetch(fetchUrl);
         const data = await response.json();
         
-        // Filter out empty rows from the spreadsheet and store globally
         packageData = data.filter(row => row.ID);
-        
-        renderTable(); // Call render function which handles sorting/filtering
+        renderTable(); 
       } catch (error) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Error loading data.</td></tr>';
         console.error(error);
       }
     }
 
-    // Unified logic to Filter, Sort, and Render HTML
     function renderTable() {
       const tbody = document.getElementById('tableBody');
       
-      // Get filter/sort states
       const filterText = document.getElementById('searchInput').value.toLowerCase();
       const filterStatus = document.getElementById('filterStatus').value;
       const filterDept = document.getElementById('filterDept').value;
       const sortBy = document.getElementById('sortBy').value;
 
-      // 1. Apply Filters
       let filteredData = packageData.filter(row => {
         const rowText = Object.values(row).join(" ").toLowerCase();
         const matchesText = rowText.includes(filterText);
@@ -269,20 +275,13 @@
         return matchesText && matchesStatus && matchesDept;
       });
 
-      // 2. Apply Sorting
       filteredData.sort((a, b) => {
-        if (sortBy === 'dateAsc') {
-          return new Date(a['Date Received']) - new Date(b['Date Received']);
-        } else if (sortBy === 'dateDesc') {
-          return new Date(b['Date Received']) - new Date(a['Date Received']);
-        } else if (sortBy === 'recipientAsc') {
-          return (a['Recipient'] || '').localeCompare(b['Recipient'] || '');
-        } else if (sortBy === 'deptAsc') {
-          return (a['Department'] || '').localeCompare(b['Department'] || '');
-        }
+        if (sortBy === 'dateAsc') return new Date(a['Date Received']) - new Date(b['Date Received']);
+        if (sortBy === 'dateDesc') return new Date(b['Date Received']) - new Date(a['Date Received']);
+        if (sortBy === 'recipientAsc') return (a['Recipient'] || '').localeCompare(b['Recipient'] || '');
+        if (sortBy === 'deptAsc') return (a['Department'] || '').localeCompare(b['Department'] || '');
       });
 
-      // 3. Render HTML
       tbody.innerHTML = '';
       if (filteredData.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No packages match your criteria.</td></tr>';
@@ -295,7 +294,6 @@
         else if (row.Status === 'In Transit (Internal)') statusBadge += 'status-transit';
         else if (row.Status === 'Delivered') statusBadge += 'status-delivered';
 
-        // Format Date to explicit Eastern Time (EDT/EST) with time included
         let displayDate = "";
         if (row['Date Received']) {
           const d = new Date(row['Date Received']);
@@ -334,7 +332,6 @@
       });
     }
 
-    // Communication with Google Apps Script
     async function sendData(action, dataObj) {
       const payload = { action: action, data: dataObj };
       try {
@@ -384,7 +381,6 @@
       document.getElementById('pkgStatus').value = status;
       document.getElementById('pkgNotes').value = notes;
       
-      // Format the incoming date specifically back for the datetime-local input
       if (date) {
         const d = new Date(date);
         if (!isNaN(d)) {
