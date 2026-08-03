@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Interoffice Package Tracker</title>
+  <!-- UPDATED BROWSER TAB TITLE -->
+  <title>IAD Package Log</title>
   <!-- Barcode Scanner Library -->
   <script src="https://unpkg.com/html5-qrcode"></script>
   
@@ -73,7 +74,8 @@
 </head>
 <body>
 
-  <h1>Interoffice Package Tracker</h1>
+  <!-- UPDATED PAGE HEADER -->
+  <h1>IAD Package Log</h1>
   <div id="statusMsg"></div>
   
   <form id="dataForm">
@@ -98,7 +100,6 @@
         <input type="text" id="pkgRecipient" required>
       </div>
       
-      <!-- UPDATED DEPARTMENT LIST -->
       <div>
         <label>Department</label>
         <select id="pkgDept" required>
@@ -176,7 +177,6 @@
       </select>
     </div>
     
-    <!-- UPDATED FILTER DEPARTMENT LIST -->
     <div class="control-group">
       <label>Filter by Department</label>
       <select id="filterDept" onchange="renderTable()">
