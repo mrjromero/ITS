@@ -3,9 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- UPDATED BROWSER TAB TITLE -->
   <title>IAD Package Log</title>
-  <!-- Barcode Scanner Library -->
   <script src="https://unpkg.com/html5-qrcode"></script>
   
   <style>
@@ -13,14 +11,12 @@
     h1 { font-size: 1.8rem; }
     h2 { border-bottom: 2px solid #0052cc; padding-bottom: 0.5rem; margin-top: 2rem; font-size: 1.4rem; }
     
-    /* Form Styles */
     form { background: #f4f5f7; padding: 1.5rem; border-radius: 6px; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     .full-width { grid-column: 1 / -1; }
     label { display: block; font-weight: bold; margin-bottom: 0.4rem; font-size: 0.9em; }
     input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 1rem; }
     
-    /* Buttons */
     .btn-group { margin-top: 1.5rem; display: flex; gap: 10px; }
     button { padding: 12px 20px; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; font-size: 1rem; }
     .primary-btn { background: #0052cc; color: white; }
@@ -28,26 +24,23 @@
     .secondary-btn { background: #6c757d; color: white; }
     .secondary-btn:hover { background: #5a6268; }
     
-    /* Filter and Sort Controls */
     .table-controls { background: #f4f5f7; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
     .control-group { flex: 1; min-width: 150px; }
     .control-group label { font-size: 0.8em; margin-bottom: 0.2rem; }
     #searchInput { border: 2px solid #0052cc; }
     
-    /* Table Styles */
     .table-responsive { width: 100%; border-radius: 4px; }
     table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
     th, td { border: 1px solid #ddd; padding: 12px 10px; text-align: left; }
     th { background-color: #0052cc; color: white; }
     tr:nth-child(even) { background-color: #f9f9f9; }
     
-    /* Status Badges */
     .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.85em; font-weight: bold; white-space: nowrap; }
     .status-mailroom { background: #ffeeba; color: #856404; }
     .status-transit { background: #b8daff; color: #004085; }
     .status-delivered { background: #c3e6cb; color: #155724; }
+    .status-default { background: #e2e3e5; color: #383d41; } /* For custom statuses */
     
-    /* Action Buttons */
     .action-btn { padding: 6px 10px; font-size: 0.85em; margin-right: 4px; margin-bottom: 4px; }
     .edit-btn { background: #ffc107; color: black; }
     .delete-btn { background: #dc3545; color: white; }
@@ -55,7 +48,6 @@
     #statusMsg { color: #0052cc; font-weight: bold; margin-bottom: 1rem; height: 20px; }
     #reader { width: 100%; max-width: 400px; margin-top: 10px; display: none; border-radius: 4px; overflow: hidden; }
 
-    /* MOBILE OPTIMIZATIONS */
     @media (max-width: 768px) {
       .form-grid { grid-template-columns: 1fr; } 
       .full-width { grid-column: auto; }
@@ -74,9 +66,8 @@
 </head>
 <body>
 
-  <!-- UPDATED PAGE HEADER -->
   <h1>IAD Package Log</h1>
-  <div id="statusMsg"></div>
+  <div id="statusMsg">Loading configuration from Google Sheets...</div>
   
   <form id="dataForm">
     <input type="hidden" id="itemId">
@@ -102,27 +93,9 @@
       
       <div>
         <label>Department</label>
+        <!-- Options are now completely empty, they get injected by JS -->
         <select id="pkgDept" required>
-          <option value="">Select Department...</option>
-          <option value="Adventist Chaplaincy Ministries (ACM)">Adventist Chaplaincy Ministries (ACM)</option>
-          <option value="Children's Ministries">Children's Ministries</option>
-          <option value="Communication">Communication</option>
-          <option value="Education">Education</option>
-          <option value="Family Ministries">Family Ministries</option>
-          <option value="Health Ministries">Health Ministries</option>
-          <option value="Information Technology">Information Technology</option>
-          <option value="Ministerial Association">Ministerial Association</option>
-          <option value="None / Personal">None / Personal</option>
-          <option value="Planned Giving and Trust Services">Planned Giving and Trust Services</option>
-          <option value="Presidency">Presidency</option>
-          <option value="Public Affairs and Religious Liberty (PARL)">Public Affairs and Religious Liberty (PARL)</option>
-          <option value="Publishing Ministries">Publishing Ministries</option>
-          <option value="Sabbath School and Personal Ministries">Sabbath School and Personal Ministries</option>
-          <option value="Secretariat">Secretariat</option>
-          <option value="Stewardship Ministries">Stewardship Ministries</option>
-          <option value="Treasury">Treasury</option>
-          <option value="Women's Ministries">Women's Ministries</option>
-          <option value="Youth Ministries">Youth Ministries</option>
+          <option value="">Loading...</option>
         </select>
       </div>
       
@@ -132,10 +105,9 @@
       </div>
       <div>
         <label>Current Status</label>
+        <!-- Options are now completely empty, they get injected by JS -->
         <select id="pkgStatus" required>
-          <option value="At Mailroom">At Mailroom</option>
-          <option value="In Transit (Internal)">In Transit (Internal)</option>
-          <option value="Delivered">Delivered</option>
+          <option value="">Loading...</option>
         </select>
       </div>
       <div class="full-width">
@@ -171,9 +143,6 @@
       <label>Filter by Status</label>
       <select id="filterStatus" onchange="renderTable()">
         <option value="">All Statuses</option>
-        <option value="At Mailroom">At Mailroom</option>
-        <option value="In Transit (Internal)">In Transit</option>
-        <option value="Delivered">Delivered</option>
       </select>
     </div>
     
@@ -181,25 +150,6 @@
       <label>Filter by Department</label>
       <select id="filterDept" onchange="renderTable()">
         <option value="">All Departments</option>
-        <option value="Adventist Chaplaincy Ministries (ACM)">Adventist Chaplaincy Ministries (ACM)</option>
-        <option value="Children's Ministries">Children's Ministries</option>
-        <option value="Communication">Communication</option>
-        <option value="Education">Education</option>
-        <option value="Family Ministries">Family Ministries</option>
-        <option value="Health Ministries">Health Ministries</option>
-        <option value="Information Technology">Information Technology</option>
-        <option value="Ministerial Association">Ministerial Association</option>
-        <option value="None / Personal">None / Personal</option>
-        <option value="Planned Giving and Trust Services">Planned Giving and Trust Services</option>
-        <option value="Presidency">Presidency</option>
-        <option value="Public Affairs and Religious Liberty (PARL)">Public Affairs and Religious Liberty (PARL)</option>
-        <option value="Publishing Ministries">Publishing Ministries</option>
-        <option value="Sabbath School and Personal Ministries">Sabbath School and Personal Ministries</option>
-        <option value="Secretariat">Secretariat</option>
-        <option value="Stewardship Ministries">Stewardship Ministries</option>
-        <option value="Treasury">Treasury</option>
-        <option value="Women's Ministries">Women's Ministries</option>
-        <option value="Youth Ministries">Youth Ministries</option>
       </select>
     </div>
     
@@ -267,7 +217,41 @@
         readerDiv.style.display = 'none';
       });
     }
-    // ----------------------------
+
+    // --- NEW: Load Dynamic Configuration (Dropdowns) ---
+    async function loadConfig() {
+      try {
+        const response = await fetch(API_URL + "?action=getConfig");
+        const config = await response.json();
+        
+        // Setup Department Dropdowns
+        const pkgDept = document.getElementById('pkgDept');
+        const filterDept = document.getElementById('filterDept');
+        pkgDept.innerHTML = '<option value="">Select Department...</option>';
+        filterDept.innerHTML = '<option value="">All Departments</option>';
+        
+        config.departments.forEach(dept => {
+          pkgDept.innerHTML += `<option value="${escapeHTML(dept)}">${escapeHTML(dept)}</option>`;
+          filterDept.innerHTML += `<option value="${escapeHTML(dept)}">${escapeHTML(dept)}</option>`;
+        });
+
+        // Setup Status Dropdowns
+        const pkgStatus = document.getElementById('pkgStatus');
+        const filterStatus = document.getElementById('filterStatus');
+        pkgStatus.innerHTML = '';
+        filterStatus.innerHTML = '<option value="">All Statuses</option>';
+        
+        config.statuses.forEach(status => {
+          pkgStatus.innerHTML += `<option value="${escapeHTML(status)}">${escapeHTML(status)}</option>`;
+          filterStatus.innerHTML += `<option value="${escapeHTML(status)}">${escapeHTML(status)}</option>`;
+        });
+        
+        document.getElementById('statusMsg').textContent = "";
+      } catch (error) {
+        console.error("Error loading configuration.", error);
+        document.getElementById('statusMsg').textContent = "Failed to load Departments/Statuses.";
+      }
+    }
 
     // Fetch data with the Time Range Parameter attached
     async function loadData() {
@@ -320,10 +304,13 @@
       }
 
       filteredData.forEach(row => {
+        // Fallback dynamic styling for custom statuses
         let statusBadge = 'badge ';
-        if (row.Status === 'At Mailroom') statusBadge += 'status-mailroom';
-        else if (row.Status === 'In Transit (Internal)') statusBadge += 'status-transit';
-        else if (row.Status === 'Delivered') statusBadge += 'status-delivered';
+        const statusLower = (row.Status || '').toLowerCase();
+        if (statusLower.includes('mailroom')) statusBadge += 'status-mailroom';
+        else if (statusLower.includes('transit')) statusBadge += 'status-transit';
+        else if (statusLower.includes('deliver')) statusBadge += 'status-delivered';
+        else statusBadge += 'status-default';
 
         let displayDate = "";
         if (row['Date Received']) {
@@ -447,8 +434,13 @@
       );
     }
 
-    // Initialize App
-    loadData();
+    // --- Master Initialization Flow ---
+    async function initApp() {
+      await loadConfig(); // Wait for dropdowns to populate first
+      await loadData();   // Then grab the package data
+    }
+    
+    initApp();
   </script>
 </body>
 </html>
