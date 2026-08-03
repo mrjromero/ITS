@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Package Delivery & Sign-Out</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; color: #333; background-color: #f4f5f7; }
+    h1 { font-size: 1.8rem; text-align: center; color: #0052cc; margin-bottom: 0.2rem; }
+    p.subtitle { text-align: center; color: #6c757d; margin-top: 0; margin-bottom: 2rem; }
+    
+    .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 1.5rem; }
+    
+    label { display: block; font-weight: bold; margin-bottom: 0.5rem; font-size: 1rem; }
+    select { width: 100%; padding: 12px; border: 2px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 1rem; margin-bottom: 1.5rem; }
+    
+    /* Package Details Display */
+    #packageDetails { display: none; background: #e9ecef; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; font-size: 0.9em; }
+    #packageDetails p { margin: 0.3rem 0; }
+    
+    /* Signature Pad */
+    .signature-container { margin-bottom: 1rem; display: none; }
+    canvas { border: 2px dashed #0052cc; border-radius: 6px; background: #fff; width: 100%; height: 200px; cursor: crosshair; touch-action: none; /* prevents scrolling on touch */ }
+    
+    /* Buttons */
+    .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+    button { padding: 12px; font-weight: bold; border: none; cursor: pointer; border-radius: 6px; font-size: 1rem; flex: 1; }
+    .primary-btn { background: #0052cc; color: white; }
+    .primary-btn:hover { background: #0043a8; }
+    .primary-btn:disabled { background: #a5c2f0; cursor: not-allowed; }
+    .clear-btn { background: #dc3545; color: white; flex: 0.4; }
+    .clear-btn:hover { background: #c82333; }
+    
+    #statusMsg { text-align: center; font-weight: bold; margin-bottom: 1rem; color: #0052cc; height: 20px; }
+  </style>
+</head>
+<body>
+
+  <h1>Package Sign-Out</h1>
+  <p class="subtitle">Select a package and provide a signature to receive.</p>
+  
+  <div id="statusMsg">Loading available packages...</div>
+  
+  <div class="card">
+    <label for="packageSelect">1. Select Package</label>
+    <select id="packageSelect" onchange="showPackageDetails()">
+      <option value="">-- Select a Package to Receive --</option>
+    </select>
+
+    <div id="packageDetails">
+      <!-- Populated dynamically via JS -->
+    </div>
+
+    <div id="signatureSection" class="signature-container">
+      <label>2. Sign to Confirm Receipt</label>
+      <!-- HTML5 Canvas for drawing the signature -->
+      <canvas id="sigCanvas"></canvas>
+      
+      <div class="btn-group">
+        <button type="button" class="clear-btn" onclick="clearSignature()">Clear</button>
+        <button type="button" class="primary-btn" id="submitBtn" onclick="submitSignature()">Sign & Receive</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbw_zV8BJ1Lcdnc36vSfhUUDxCpXOaYpa8H95eQQjP6iu33TfiilTgy247keK44gH_ZKfQ/exec";
+    
+    let pendingPackages = [];
+
+    // --- Signature Pad Logic ---
+    const canvas = document.getElementById('sigCanvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+
+    // Resize canvas properly based on its container
+    function resizeCanvas() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = 200;
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#000';
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    // Drawing Functions
+    function startDrawing(e) {
+      isDrawing = true;
+      draw(e);
+    }
+    function stopDrawing() {
+      isDrawing = false;
+      ctx.beginPath();
+    }
+    function draw(e) {
+      if (!isDrawing) return;
+      e.preventDefault(); // Prevent scrolling on touch
+      
+      const rect = canvas.getBoundingClientRect();
+      let clientX, clientY;
+      
+      if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+
+      ctx.lineTo(clientX - rect.left, clientY - rect.top);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(clientX - rect.left, clientY - rect.top);
+    }
+
+    // Event Listeners for Mouse and Touch
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+    
+    canvas.addEventListener('touchstart', startDrawing, {passive: false});
+    canvas.addEventListener('touchmove', draw, {passive: false});
+    canvas.addEventListener('touchend', stopDrawing);
+
+    function clearSignature() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    // ----------------------------
+
+    // Fetch only packages that are not delivered
+    async function loadPackages() {
+      const select = document.getElementById('packageSelect');
+      const msg = document.getElementById('statusMsg');
+      
+      try {
+        // We only need the last 3 months for the pickup queue to keep it fast
+        const response = await fetch(API_URL + "?monthsBack=3");
+        const data = await response.json();
+        
+        // Filter out Delivered packages and empty rows
+        pendingPackages = data.filter(row => row.ID && row.Status !== 'Delivered');
+        
+        select.innerHTML = '<option value="">-- Select a Package to Receive --</option>';
+        
+        if (pendingPackages.length === 0) {
+          msg.textContent = "No packages waiting for pickup!";
+          msg.style.color = "#28a745";
+          return;
+        }
+
+        // Sort by recipient name alphabetically
+        pendingPackages.sort((a, b) => (a['Recipient'] || '').localeCompare(b['Recipient'] || ''));
+
+        pendingPackages.forEach(pkg => {
+          const option = document.createElement('option');
+          option.value = pkg.ID;
+          // Display format: Recipient - Tracking Number (Sender)
+          option.textContent = `${pkg.Recipient} - ${pkg['Tracking Number']} (${pkg.Sender})`;
+          select.appendChild(option);
+        });
+        
+        msg.textContent = "";
+        
+      } catch (error) {
+        msg.textContent = "Error loading packages.";
+        msg.style.color = "red";
+        console.error(error);
+      }
+    }
+
+    // Show details and unhide signature pad when a package is selected
+    function showPackageDetails() {
+      const selectedId = document.getElementById('packageSelect').value;
+      const detailsDiv = document.getElementById('packageDetails');
+      const sigSection = document.getElementById('signatureSection');
+      
+      if (!selectedId) {
+        detailsDiv.style.display = 'none';
+        sigSection.style.display = 'none';
+        return;
+      }
+
+      const pkg = pendingPackages.find(p => p.ID === selectedId);
+      
+      let displayDate = "";
+      if (pkg['Date Received']) {
+        displayDate = new Date(pkg['Date Received']).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + " EDT";
+      }
+
+      detailsDiv.innerHTML = `
+        <p><strong>Tracking:</strong> ${pkg['Tracking Number']}</p>
+        <p><strong>Sender:</strong> ${pkg['Sender']}</p>
+        <p><strong>Recipient:</strong> ${pkg['Recipient']} (${pkg['Department']})</p>
+        <p><strong>Received:</strong> ${displayDate}</p>
+      `;
+      
+      detailsDiv.style.display = 'block';
+      sigSection.style.display = 'block';
+      
+      // Ensure canvas is sized correctly when it becomes visible
+      resizeCanvas();
+      clearSignature();
+    }
+
+    // Submit the signature and update the Google Sheet
+    async function submitSignature() {
+      const selectedId = document.getElementById('packageSelect').value;
+      if (!selectedId) return alert("Please select a package.");
+      
+      // Check if canvas is completely empty (basic check by looking at pixel data)
+      const pixelBuffer = new Uint32Array(ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer);
+      if (!pixelBuffer.some(color => color !== 0)) {
+        return alert("Please sign the pad before submitting.");
+      }
+
+      const btn = document.getElementById('submitBtn');
+      const msg = document.getElementById('statusMsg');
+      
+      btn.disabled = true;
+      btn.textContent = "Saving...";
+      msg.textContent = "Updating database...";
+      msg.style.color = "#0052cc";
+
+      // Convert the drawing to a Base64 image string
+      const signatureDataUrl = canvas.toDataURL("image/png");
+
+      // We only send the fields we want to update! The backend will leave the rest alone.
+      const payload = {
+        action: 'update',
+        data: {
+          ID: selectedId,
+          Status: 'Delivered', // Instantly mark as delivered
+          Signature: signatureDataUrl // Save the image data
+        }
+      };
+
+      try {
+        await fetch(API_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        
+        setTimeout(() => {
+          document.getElementById('packageDetails').style.display = 'none';
+          document.getElementById('signatureSection').style.display = 'none';
+          msg.textContent = "Package successfully signed out!";
+          msg.style.color = "#28a745";
+          btn.disabled = false;
+          btn.textContent = "Sign & Receive";
+          
+          // Refresh the dropdown list to remove the one we just signed for
+          loadPackages(); 
+        }, 1500);
+
+      } catch (error) {
+        alert("Error saving signature.");
+        btn.disabled = false;
+        btn.textContent = "Sign & Receive";
+        msg.textContent = "";
+      }
+    }
+
+    // Initialize
+    loadPackages();
+  </script>
+</body>
+</html>
