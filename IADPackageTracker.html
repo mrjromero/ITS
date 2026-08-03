@@ -19,7 +19,7 @@
     label { display: block; font-weight: bold; margin-bottom: 0.4rem; font-size: 0.9em; }
     input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 1rem; }
     
-    /* Buttons and Controls */
+    /* Buttons */
     .btn-group { margin-top: 1.5rem; display: flex; gap: 10px; }
     button { padding: 12px 20px; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; font-size: 1rem; }
     .primary-btn { background: #0052cc; color: white; }
@@ -27,10 +27,13 @@
     .secondary-btn { background: #6c757d; color: white; }
     .secondary-btn:hover { background: #5a6268; }
     
-    .table-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
-    #searchInput { max-width: 350px; border: 2px solid #0052cc; }
+    /* Filter and Sort Controls */
+    .table-controls { background: #f4f5f7; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+    .control-group { flex: 1; min-width: 150px; }
+    .control-group label { font-size: 0.8em; margin-bottom: 0.2rem; }
+    #searchInput { border: 2px solid #0052cc; }
     
-    /* Table Styles (Desktop Default) */
+    /* Table Styles */
     .table-responsive { width: 100%; border-radius: 4px; }
     table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
     th, td { border: 1px solid #ddd; padding: 12px 10px; text-align: left; }
@@ -51,53 +54,20 @@
     #statusMsg { color: #0052cc; font-weight: bold; margin-bottom: 1rem; height: 20px; }
     #reader { width: 100%; max-width: 400px; margin-top: 10px; display: none; border-radius: 4px; overflow: hidden; }
 
-    /* MOBILE OPTIMIZATIONS (Card View Table) */
+    /* MOBILE OPTIMIZATIONS */
     @media (max-width: 768px) {
       .form-grid { grid-template-columns: 1fr; } 
       .full-width { grid-column: auto; }
       .btn-group { flex-direction: column; } 
       .btn-group button { width: 100%; } 
-      .table-controls { flex-direction: column; align-items: stretch; }
-      #searchInput { max-width: 100%; } 
+      .control-group { min-width: 100%; }
       
-      /* Force table elements to not behave like standard tables */
       table, thead, tbody, th, td, tr { display: block; }
-      
-      /* Hide table headers (but keep them accessible for screen readers) */
       thead tr { position: absolute; top: -9999px; left: -9999px; }
-      
-      /* Style each row as a card */
-      tr { 
-        border: 1px solid #ccc; 
-        border-radius: 8px; 
-        margin-bottom: 1rem; 
-        background: #fff; 
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
-        padding: 0.5rem;
-      }
-      
-      /* Style cells */
-      td { 
-        border: none; 
-        border-bottom: 1px solid #eee; 
-        position: relative; 
-        padding: 10px 10px 10px 40%; 
-        min-height: 30px;
-        text-align: right;
-      }
+      tr { border: 1px solid #ccc; border-radius: 8px; margin-bottom: 1rem; background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 0.5rem; }
+      td { border: none; border-bottom: 1px solid #eee; position: relative; padding: 10px 10px 10px 40%; min-height: 30px; text-align: right; }
       td:last-child { border-bottom: 0; text-align: right; }
-      
-      /* Insert the label using the data-label attribute */
-      td::before { 
-        content: attr(data-label); 
-        position: absolute; 
-        left: 10px; 
-        width: 35%; 
-        padding-right: 10px; 
-        font-weight: bold; 
-        color: #555;
-        text-align: left;
-      }
+      td::before { content: attr(data-label); position: absolute; left: 10px; width: 35%; padding-right: 10px; font-weight: bold; color: #555; text-align: left; }
     }
   </style>
 </head>
@@ -110,7 +80,6 @@
     <input type="hidden" id="itemId">
     
     <div class="form-grid">
-      <!-- Tracking Field with Scanner Button -->
       <div class="full-width">
         <label>Tracking Number / Carrier</label>
         <div style="display: flex; gap: 5px;">
@@ -121,8 +90,8 @@
       </div>
       
       <div>
-        <label>Date Received</label>
-        <input type="date" id="pkgDate" required>
+        <label>Date & Time Received</label>
+        <input type="datetime-local" id="pkgDate" required>
       </div>
       <div>
         <label>Recipient Name</label>
@@ -166,16 +135,52 @@
 
   <h2>Package Inventory</h2>
   
+  <!-- NEW: Filter and Sort Controls -->
   <div class="table-controls">
-    <button onclick="loadData()" class="primary-btn">Refresh Inventory</button>
-    <input type="text" id="searchInput" placeholder="Search by name, dept, tracking..." onkeyup="filterTable()">
+    <div class="control-group">
+      <label>Search All Fields</label>
+      <input type="text" id="searchInput" placeholder="Search..." onkeyup="renderTable()">
+    </div>
+    <div class="control-group">
+      <label>Filter by Status</label>
+      <select id="filterStatus" onchange="renderTable()">
+        <option value="">All Statuses</option>
+        <option value="At Mailroom">At Mailroom</option>
+        <option value="In Transit (Internal)">In Transit</option>
+        <option value="Delivered">Delivered</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Filter by Department</label>
+      <select id="filterDept" onchange="renderTable()">
+        <option value="">All Departments</option>
+        <option value="HR">HR</option>
+        <option value="IT">IT</option>
+        <option value="Executive">Executive</option>
+        <option value="Accounting">Accounting</option>
+        <option value="Marketing">Marketing</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Sort By</label>
+      <select id="sortBy" onchange="renderTable()">
+        <option value="dateAsc">Date (Earliest to Latest)</option>
+        <option value="dateDesc">Date (Latest to Earliest)</option>
+        <option value="recipientAsc">Recipient (A-Z)</option>
+        <option value="deptAsc">Department (A-Z)</option>
+      </select>
+    </div>
+    <div class="control-group" style="flex: 0; min-width: auto;">
+       <button onclick="loadData()" class="primary-btn" style="height: 100%;">Refresh</button>
+    </div>
   </div>
   
   <div class="table-responsive">
     <table>
       <thead>
         <tr>
-          <th>Date</th>
+          <th>Date & Time (EDT)</th>
           <th>Tracking / Carrier</th>
           <th>Recipient</th>
           <th>Dept</th>
@@ -192,45 +197,40 @@
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbw_zV8BJ1Lcdnc36vSfhUUDxCpXOaYpa8H95eQQjP6iu33TfiilTgy247keK44gH_ZKfQ/exec";
+    
+    // Global array to hold the downloaded sheet data
+    let packageData = [];
+
+    // Set Default Datetime to current local time
+    function setCurrentDateTime() {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      document.getElementById('pkgDate').value = now.toISOString().slice(0, 16);
+    }
+    setCurrentDateTime();
 
     // --- Barcode Scanner Logic ---
     let html5QrCode;
-
     function toggleScanner() {
       const readerDiv = document.getElementById('reader');
-      
       if (html5QrCode && html5QrCode.isScanning) {
-        html5QrCode.stop().then(() => {
-          readerDiv.style.display = 'none';
-        });
+        html5QrCode.stop().then(() => { readerDiv.style.display = 'none'; });
         return;
       }
-
       readerDiv.style.display = 'block';
+      if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
       
-      if (!html5QrCode) {
-        html5QrCode = new Html5Qrcode("reader");
-      }
-
-      const config = { fps: 10, qrbox: { width: 250, height: 100 } };
-      
-      html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+      html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 100 } }, (decodedText) => {
         document.getElementById('pkgTracking').value = decodedText;
-        html5QrCode.stop().then(() => {
-          readerDiv.style.display = 'none';
-        });
-      }, (errorMessage) => {
-        // Ignored
-      }).catch((err) => {
-        console.error("Camera error:", err);
-        alert("Could not start camera. Please ensure you have granted camera permissions in your browser.");
+        html5QrCode.stop().then(() => { readerDiv.style.display = 'none'; });
+      }, () => {}).catch(err => {
+        alert("Camera error. Please ensure you have granted permissions.");
         readerDiv.style.display = 'none';
       });
     }
     // ----------------------------
 
-    document.getElementById('pkgDate').valueAsDate = new Date();
-
+    // Fetch data and store it in memory
     async function loadData() {
       const tbody = document.getElementById('tableBody');
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Loading packages...</td></tr>';
@@ -239,76 +239,102 @@
         const response = await fetch(API_URL);
         const data = await response.json();
         
-        tbody.innerHTML = '';
-        if (data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No packages logged.</td></tr>';
-          return;
-        }
-
-        data.reverse().forEach(row => {
-          if(!row.ID) return; 
-
-          let statusBadge = 'badge ';
-          if (row.Status === 'At Mailroom') statusBadge += 'status-mailroom';
-          else if (row.Status === 'In Transit (Internal)') statusBadge += 'status-transit';
-          else if (row.Status === 'Delivered') statusBadge += 'status-delivered';
-
-          let displayDate = row['Date Received'] ? new Date(row['Date Received']).toLocaleDateString() : '';
-
-          const tr = document.createElement('tr');
-          
-          // ADDED data-label ATTRIBUTES TO EACH <td> FOR MOBILE CARD VIEW
-          tr.innerHTML = `
-            <td data-label="Date">${escapeHTML(displayDate)}</td>
-            <td data-label="Tracking"><strong>${escapeHTML(row['Tracking Number'])}</strong><br><small>${escapeHTML(row['Notes'])}</small></td>
-            <td data-label="Recipient">${escapeHTML(row['Recipient'])}</td>
-            <td data-label="Dept">${escapeHTML(row['Department'])}</td>
-            <td data-label="Sender">${escapeHTML(row['Sender'])}</td>
-            <td data-label="Status"><span class="${statusBadge}">${escapeHTML(row.Status)}</span></td>
-            <td data-label="Actions">
-              <button class="action-btn edit-btn" onclick="editRecord(
-                '${row.ID}', 
-                '${escapeHTML(row['Tracking Number'])}', 
-                '${escapeHTML(row['Recipient'])}', 
-                '${escapeHTML(row['Department'])}', 
-                '${escapeHTML(row['Sender'])}', 
-                '${escapeHTML(row['Date Received'])}', 
-                '${escapeHTML(row['Status'])}', 
-                '${escapeHTML(row['Notes'])}'
-              )">Edit</button>
-              <button class="action-btn delete-btn" onclick="deleteRecord('${row.ID}')">Del</button>
-            </td>
-          `;
-          tbody.appendChild(tr);
-        });
+        // Filter out empty rows from the spreadsheet and store globally
+        packageData = data.filter(row => row.ID);
         
-        filterTable(); 
-        
+        renderTable(); // Call render function which handles sorting/filtering
       } catch (error) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Error loading data.</td></tr>';
         console.error(error);
       }
     }
 
-    function filterTable() {
-      const input = document.getElementById("searchInput");
-      const filter = input.value.toLowerCase();
-      const tbody = document.getElementById("tableBody");
-      const trs = tbody.getElementsByTagName("tr");
+    // Unified logic to Filter, Sort, and Render HTML
+    function renderTable() {
+      const tbody = document.getElementById('tableBody');
+      
+      // Get filter/sort states
+      const filterText = document.getElementById('searchInput').value.toLowerCase();
+      const filterStatus = document.getElementById('filterStatus').value;
+      const filterDept = document.getElementById('filterDept').value;
+      const sortBy = document.getElementById('sortBy').value;
 
-      for (let i = 0; i < trs.length; i++) {
-        const tds = trs[i].getElementsByTagName("td");
-        if (tds.length > 1) {
-          let rowText = trs[i].textContent.toLowerCase();
-          if (rowText.includes(filter)) {
-            trs[i].style.display = "";
-          } else {
-            trs[i].style.display = "none";
+      // 1. Apply Filters
+      let filteredData = packageData.filter(row => {
+        const rowText = Object.values(row).join(" ").toLowerCase();
+        const matchesText = rowText.includes(filterText);
+        const matchesStatus = filterStatus === "" || row['Status'] === filterStatus;
+        const matchesDept = filterDept === "" || row['Department'] === filterDept;
+        
+        return matchesText && matchesStatus && matchesDept;
+      });
+
+      // 2. Apply Sorting
+      filteredData.sort((a, b) => {
+        if (sortBy === 'dateAsc') {
+          return new Date(a['Date Received']) - new Date(b['Date Received']);
+        } else if (sortBy === 'dateDesc') {
+          return new Date(b['Date Received']) - new Date(a['Date Received']);
+        } else if (sortBy === 'recipientAsc') {
+          return (a['Recipient'] || '').localeCompare(b['Recipient'] || '');
+        } else if (sortBy === 'deptAsc') {
+          return (a['Department'] || '').localeCompare(b['Department'] || '');
+        }
+      });
+
+      // 3. Render HTML
+      tbody.innerHTML = '';
+      if (filteredData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No packages match your criteria.</td></tr>';
+        return;
+      }
+
+      filteredData.forEach(row => {
+        let statusBadge = 'badge ';
+        if (row.Status === 'At Mailroom') statusBadge += 'status-mailroom';
+        else if (row.Status === 'In Transit (Internal)') statusBadge += 'status-transit';
+        else if (row.Status === 'Delivered') statusBadge += 'status-delivered';
+
+        // Format Date to explicit Eastern Time (EDT/EST) with time included
+        let displayDate = "";
+        if (row['Date Received']) {
+          const d = new Date(row['Date Received']);
+          if (!isNaN(d)) {
+            displayDate = d.toLocaleString('en-US', { 
+              timeZone: 'America/New_York', 
+              year: 'numeric', month: 'short', day: 'numeric', 
+              hour: 'numeric', minute: '2-digit' 
+            }) + " EDT";
           }
         }
-      }
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td data-label="Date/Time">${escapeHTML(displayDate)}</td>
+          <td data-label="Tracking"><strong>${escapeHTML(row['Tracking Number'])}</strong><br><small>${escapeHTML(row['Notes'])}</small></td>
+          <td data-label="Recipient">${escapeHTML(row['Recipient'])}</td>
+          <td data-label="Dept">${escapeHTML(row['Department'])}</td>
+          <td data-label="Sender">${escapeHTML(row['Sender'])}</td>
+          <td data-label="Status"><span class="${statusBadge}">${escapeHTML(row.Status)}</span></td>
+          <td data-label="Actions">
+            <button class="action-btn edit-btn" onclick="editRecord(
+              '${row.ID}', 
+              '${escapeHTML(row['Tracking Number'])}', 
+              '${escapeHTML(row['Recipient'])}', 
+              '${escapeHTML(row['Department'])}', 
+              '${escapeHTML(row['Sender'])}', 
+              '${escapeHTML(row['Date Received'])}', 
+              '${escapeHTML(row['Status'])}', 
+              '${escapeHTML(row['Notes'])}'
+            )">Edit</button>
+            <button class="action-btn delete-btn" onclick="deleteRecord('${row.ID}')">Del</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
+    // Communication with Google Apps Script
     async function sendData(action, dataObj) {
       const payload = { action: action, data: dataObj };
       try {
@@ -333,7 +359,6 @@
       document.getElementById('statusMsg').textContent = "Syncing with Google Sheets...";
 
       const id = document.getElementById('itemId').value;
-      
       const dataObj = {
         "Tracking Number": document.getElementById('pkgTracking').value,
         "Recipient": document.getElementById('pkgRecipient').value,
@@ -344,12 +369,9 @@
         "Notes": document.getElementById('pkgNotes').value
       };
 
-      if (id) {
-        dataObj.ID = id;
-        sendData('update', dataObj);
-      } else {
-        sendData('create', dataObj);
-      }
+      if (id) sendData('update', dataObj);
+      else sendData('create', dataObj);
+      
       resetForm();
     });
 
@@ -362,9 +384,13 @@
       document.getElementById('pkgStatus').value = status;
       document.getElementById('pkgNotes').value = notes;
       
+      // Format the incoming date specifically back for the datetime-local input
       if (date) {
         const d = new Date(date);
-        document.getElementById('pkgDate').value = d.toISOString().split('T')[0];
+        if (!isNaN(d)) {
+          d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+          document.getElementById('pkgDate').value = d.toISOString().slice(0, 16);
+        }
       }
 
       document.getElementById('submitBtn').textContent = "Update Package";
@@ -384,9 +410,7 @@
       document.getElementById('itemId').value = "";
       document.getElementById('submitBtn').textContent = "Log Package";
       document.getElementById('cancelBtn').style.display = "none";
-      document.getElementById('pkgDate').valueAsDate = new Date();
-      document.getElementById('searchInput').value = "";
-      filterTable();
+      setCurrentDateTime();
     }
 
     function escapeHTML(str) {
@@ -396,6 +420,7 @@
       );
     }
 
+    // Initialize App
     loadData();
   </script>
 </body>
