@@ -2,6 +2,172 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transportation Information Closed - SeLD Conference</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0b3c5d; /* Deep blue often used in SDA/Conference branding */
+            --primary-hover: #1d5f8a;
+            --accent-color: #d9b310; /* Gold/Yellow accent */
+            --text-main: #333333;
+            --text-muted: #666666;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            max-width: 500px;
+            width: 100%;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .header {
+            background-color: var(--primary-color);
+            padding: 40px 20px;
+            color: white;
+            border-bottom: 4px solid var(--accent-color);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .header p {
+            margin: 10px 0 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .icon-wrapper {
+            width: 64px;
+            height: 64px;
+            background-color: #fff3cd;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 24px;
+        }
+
+        .icon-wrapper svg {
+            width: 32px;
+            height: 32px;
+            color: #856404;
+        }
+
+        .content h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0 0 16px;
+            color: var(--primary-color);
+        }
+
+        .content p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--text-muted);
+            margin: 0 0 32px;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            padding: 14px 28px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            font-size: 13px;
+            color: #888;
+            border-top: 1px solid #eaeaea;
+        }
+        
+        .footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>SeLD Conference</h1>
+            <p>Leadership Development</p>
+        </div>
+        
+        <div class="content">
+            <div class="icon-wrapper">
+                <!-- Info Icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+            </div>
+            <h2>Information Update</h2>
+            <p>Please note that the transportation information for the SeLD Conference is now closed. We apologize for any inconvenience this may cause.</p>
+            
+            <a href="https://seldconference.com" class="btn">
+                Return to Homepage
+            </a>
+        </div>
+        
+        <div class="footer">
+            &copy; 2026 <a href="https://seldconference.com">SeLD Conference</a>. All rights reserved.
+        </div>
+    </div>
+
+</body>
+</html>
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
     <meta name="robots" content="noindex, nofollow">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0056b3">
@@ -809,4 +975,4 @@
 </script>
 
 </body>
-</html>
+</html> -->
