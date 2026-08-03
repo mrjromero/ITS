@@ -39,7 +39,7 @@
     .status-mailroom { background: #ffeeba; color: #856404; }
     .status-transit { background: #b8daff; color: #004085; }
     .status-delivered { background: #c3e6cb; color: #155724; }
-    .status-default { background: #e2e3e5; color: #383d41; } /* For custom statuses */
+    .status-default { background: #e2e3e5; color: #383d41; } 
     
     .action-btn { padding: 6px 10px; font-size: 0.85em; margin-right: 4px; margin-bottom: 4px; }
     .edit-btn { background: #ffc107; color: black; }
@@ -67,7 +67,8 @@
 <body>
 
   <h1>IAD Package Log</h1>
-  <div id="statusMsg">Loading configuration from Google Sheets...</div>
+  <!-- UPDATED STATUS MESSAGE -->
+  <div id="statusMsg">Loading configuration...</div>
   
   <form id="dataForm">
     <input type="hidden" id="itemId">
@@ -93,7 +94,6 @@
       
       <div>
         <label>Department</label>
-        <!-- Options are now completely empty, they get injected by JS -->
         <select id="pkgDept" required>
           <option value="">Loading...</option>
         </select>
@@ -105,7 +105,6 @@
       </div>
       <div>
         <label>Current Status</label>
-        <!-- Options are now completely empty, they get injected by JS -->
         <select id="pkgStatus" required>
           <option value="">Loading...</option>
         </select>
@@ -156,8 +155,8 @@
     <div class="control-group">
       <label>Sort By</label>
       <select id="sortBy" onchange="renderTable()">
+        <option value="dateDesc" selected>Date (Latest to Earliest)</option>
         <option value="dateAsc">Date (Earliest to Latest)</option>
-        <option value="dateDesc">Date (Latest to Earliest)</option>
         <option value="recipientAsc">Recipient (A-Z)</option>
         <option value="deptAsc">Department (A-Z)</option>
       </select>
@@ -198,7 +197,6 @@
     }
     setCurrentDateTime();
 
-    // --- Barcode Scanner Logic ---
     let html5QrCode;
     function toggleScanner() {
       const readerDiv = document.getElementById('reader');
@@ -218,13 +216,11 @@
       });
     }
 
-    // --- NEW: Load Dynamic Configuration (Dropdowns) ---
     async function loadConfig() {
       try {
         const response = await fetch(API_URL + "?action=getConfig");
         const config = await response.json();
         
-        // Setup Department Dropdowns
         const pkgDept = document.getElementById('pkgDept');
         const filterDept = document.getElementById('filterDept');
         pkgDept.innerHTML = '<option value="">Select Department...</option>';
@@ -235,7 +231,6 @@
           filterDept.innerHTML += `<option value="${escapeHTML(dept)}">${escapeHTML(dept)}</option>`;
         });
 
-        // Setup Status Dropdowns
         const pkgStatus = document.getElementById('pkgStatus');
         const filterStatus = document.getElementById('filterStatus');
         pkgStatus.innerHTML = '';
@@ -253,10 +248,10 @@
       }
     }
 
-    // Fetch data with the Time Range Parameter attached
     async function loadData() {
       const tbody = document.getElementById('tableBody');
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Fetching data from Google Sheets...</td></tr>';
+      // UPDATED TABLE LOADING MESSAGE
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Fetching data...</td></tr>';
       
       try {
         const timeRange = document.getElementById('timeRange').value;
@@ -304,7 +299,6 @@
       }
 
       filteredData.forEach(row => {
-        // Fallback dynamic styling for custom statuses
         let statusBadge = 'badge ';
         const statusLower = (row.Status || '').toLowerCase();
         if (statusLower.includes('mailroom')) statusBadge += 'status-mailroom';
@@ -371,7 +365,8 @@
 
     document.getElementById('dataForm').addEventListener('submit', (e) => {
       e.preventDefault();
-      document.getElementById('statusMsg').textContent = "Syncing with Google Sheets...";
+      // UPDATED FORM SUBMISSION MESSAGE
+      document.getElementById('statusMsg').textContent = "Syncing database...";
 
       const id = document.getElementById('itemId').value;
       const dataObj = {
@@ -434,10 +429,9 @@
       );
     }
 
-    // --- Master Initialization Flow ---
     async function initApp() {
-      await loadConfig(); // Wait for dropdowns to populate first
-      await loadData();   // Then grab the package data
+      await loadConfig(); 
+      await loadData();   
     }
     
     initApp();
