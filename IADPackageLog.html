@@ -19,8 +19,9 @@
     
     .btn-group { margin-top: 1.5rem; display: flex; gap: 10px; }
     button { padding: 12px 20px; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; font-size: 1rem; }
-    .primary-btn { background: #0052cc; color: white; }
+    .primary-btn { background: #0052cc; color: white; transition: background 0.2s; }
     .primary-btn:hover { background: #0043a8; }
+    .primary-btn:disabled { background: #a5c2f0; cursor: not-allowed; }
     .secondary-btn { background: #6c757d; color: white; }
     .secondary-btn:hover { background: #5a6268; }
     
@@ -349,7 +350,6 @@
           }
         }
 
-        // NEW: Check if a signature exists for this row
         let sigButtonHTML = '';
         if (row.Signature && row.Signature.trim() !== '') {
           sigButtonHTML = `<button class="action-btn view-btn" onclick="openSignatureModal('${row.ID}')">View Sig</button>`;
@@ -403,8 +403,9 @@
     }
 
     function closeModal(e) {
+      if (e && e.target.id !== 'sigModal' && e.target.className !== 'close-modal') return;
       document.getElementById('sigModal').style.display = 'none';
-      document.getElementById('modalImg').src = ''; // clear image to prevent flickering
+      document.getElementById('modalImg').src = ''; 
     }
 
     async function sendData(action, dataObj) {
@@ -426,11 +427,17 @@
       }
     }
 
-    document.getElementById('dataForm').addEventListener('submit', (e) => {
+    // --- UPDATED: Button Feedback & Form Submission ---
+    document.getElementById('dataForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      
+      const submitBtn = document.getElementById('submitBtn');
+      const isUpdate = document.getElementById('itemId').value !== "";
+      
+      submitBtn.textContent = isUpdate ? "Updating..." : "Logging...";
+      submitBtn.disabled = true;
       document.getElementById('statusMsg').textContent = "Syncing database...";
 
-      const id = document.getElementById('itemId').value;
       const dataObj = {
         "Tracking Number": document.getElementById('pkgTracking').value,
         "Recipient": document.getElementById('pkgRecipient').value,
@@ -441,10 +448,15 @@
         "Notes": document.getElementById('pkgNotes').value
       };
 
-      if (id) sendData('update', dataObj);
-      else sendData('create', dataObj);
+      if (isUpdate) {
+        dataObj.ID = document.getElementById('itemId').value;
+        await sendData('update', dataObj);
+      } else {
+        await sendData('create', dataObj);
+      }
       
       resetForm();
+      submitBtn.disabled = false;
     });
 
     function editRecord(id, track, rec, dept, sender, date, status, notes) {
