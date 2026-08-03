@@ -44,9 +44,27 @@
     .action-btn { padding: 6px 10px; font-size: 0.85em; margin-right: 4px; margin-bottom: 4px; }
     .edit-btn { background: #ffc107; color: black; }
     .delete-btn { background: #dc3545; color: white; }
+    .view-btn { background: #17a2b8; color: white; }
     
     #statusMsg { color: #0052cc; font-weight: bold; margin-bottom: 1rem; height: 20px; }
     #reader { width: 100%; max-width: 400px; margin-top: 10px; display: none; border-radius: 4px; overflow: hidden; }
+
+    /* --- MODAL STYLES --- */
+    .modal-overlay { 
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+      background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; 
+    }
+    .modal-card { 
+      background: white; padding: 20px; border-radius: 8px; max-width: 400px; width: 90%; 
+      position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    .close-modal { 
+      position: absolute; top: 10px; right: 15px; font-size: 1.5rem; 
+      cursor: pointer; border: none; background: none; font-weight: bold; color: #555;
+    }
+    .close-modal:hover { color: #000; }
+    .sig-image { width: 100%; border: 2px dashed #ccc; border-radius: 4px; margin-top: 15px; background: #f9f9f9; }
+    .modal-details p { margin: 5px 0; font-size: 0.95em; }
 
     @media (max-width: 768px) {
       .form-grid { grid-template-columns: 1fr; } 
@@ -67,7 +85,6 @@
 <body>
 
   <h1>IAD Package Log</h1>
-  <!-- UPDATED STATUS MESSAGE -->
   <div id="statusMsg">Loading configuration...</div>
   
   <form id="dataForm">
@@ -185,6 +202,21 @@
     </table>
   </div>
 
+  <!-- --- SIGNATURE MODAL --- -->
+  <div id="sigModal" class="modal-overlay" onclick="closeModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <button class="close-modal" onclick="closeModal()">&times;</button>
+      <h3 style="margin-top:0; color:#0052cc;">Proof of Delivery</h3>
+      <div class="modal-details">
+        <p><strong>Tracking:</strong> <span id="modalTracking"></span></p>
+        <p><strong>Recipient:</strong> <span id="modalRecipient"></span> (<span id="modalDept"></span>)</p>
+        <p><strong>Date Logged:</strong> <span id="modalDate"></span></p>
+      </div>
+      <p style="margin-bottom:0; font-weight:bold; font-size:0.9em; margin-top:15px;">Signature:</p>
+      <img id="modalImg" class="sig-image" src="" alt="Signature" />
+    </div>
+  </div>
+
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbw_zV8BJ1Lcdnc36vSfhUUDxCpXOaYpa8H95eQQjP6iu33TfiilTgy247keK44gH_ZKfQ/exec";
     
@@ -250,7 +282,6 @@
 
     async function loadData() {
       const tbody = document.getElementById('tableBody');
-      // UPDATED TABLE LOADING MESSAGE
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Fetching data...</td></tr>';
       
       try {
@@ -318,6 +349,12 @@
           }
         }
 
+        // NEW: Check if a signature exists for this row
+        let sigButtonHTML = '';
+        if (row.Signature && row.Signature.trim() !== '') {
+          sigButtonHTML = `<button class="action-btn view-btn" onclick="openSignatureModal('${row.ID}')">View Sig</button>`;
+        }
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td data-label="Date/Time">${escapeHTML(displayDate)}</td>
@@ -327,6 +364,7 @@
           <td data-label="Sender">${escapeHTML(row['Sender'])}</td>
           <td data-label="Status"><span class="${statusBadge}">${escapeHTML(row.Status)}</span></td>
           <td data-label="Actions">
+            ${sigButtonHTML}
             <button class="action-btn edit-btn" onclick="editRecord(
               '${row.ID}', 
               '${escapeHTML(row['Tracking Number'])}', 
@@ -342,6 +380,31 @@
         `;
         tbody.appendChild(tr);
       });
+    }
+
+    // --- Modal Functions ---
+    function openSignatureModal(id) {
+      const pkg = packageData.find(p => p.ID === id);
+      if (!pkg) return;
+
+      let displayDate = "";
+      if (pkg['Date Received']) {
+        const d = new Date(pkg['Date Received']);
+        if (!isNaN(d)) displayDate = d.toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + " EDT";
+      }
+
+      document.getElementById('modalTracking').textContent = pkg['Tracking Number'];
+      document.getElementById('modalRecipient').textContent = pkg['Recipient'];
+      document.getElementById('modalDept').textContent = pkg['Department'];
+      document.getElementById('modalDate').textContent = displayDate;
+      document.getElementById('modalImg').src = pkg['Signature'];
+      
+      document.getElementById('sigModal').style.display = 'flex';
+    }
+
+    function closeModal(e) {
+      document.getElementById('sigModal').style.display = 'none';
+      document.getElementById('modalImg').src = ''; // clear image to prevent flickering
     }
 
     async function sendData(action, dataObj) {
@@ -365,7 +428,6 @@
 
     document.getElementById('dataForm').addEventListener('submit', (e) => {
       e.preventDefault();
-      // UPDATED FORM SUBMISSION MESSAGE
       document.getElementById('statusMsg').textContent = "Syncing database...";
 
       const id = document.getElementById('itemId').value;
