@@ -9,7 +9,6 @@
   <style>
     body { font-family: system-ui, sans-serif; max-width: 1000px; margin: 2rem auto; padding: 0 1rem; color: #333; }
     
-    /* Header Styles */
     .header-container { display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 15px; }
     h1 { font-size: 1.8rem; margin: 0; }
     h2 { border-bottom: 2px solid #0052cc; padding-bottom: 0.5rem; margin-top: 2rem; font-size: 1.4rem; }
@@ -21,7 +20,7 @@
     input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 1rem; }
     
     .btn-group { margin-top: 1.5rem; display: flex; gap: 10px; }
-    button { padding: 12px 20px; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; font-size: 1rem; }
+    button, .action-btn-link { padding: 12px 20px; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; font-size: 1rem; }
     .primary-btn { background: #0052cc; color: white; transition: background 0.2s; }
     .primary-btn:hover { background: #0043a8; }
     .primary-btn:disabled { background: #a5c2f0; cursor: not-allowed; }
@@ -29,6 +28,9 @@
     .secondary-btn:hover { background: #5a6268; }
     .kiosk-btn { background: #28a745; color: white; }
     .kiosk-btn:hover { background: #218838; }
+    
+    .email-btn { background: #17a2b8; color: white; text-align: center; display: block; text-decoration: none; width: 100%; box-sizing: border-box; }
+    .email-btn:hover { background: #138496; }
     
     .table-controls { background: #f4f5f7; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
     .control-group { flex: 1; min-width: 150px; }
@@ -55,19 +57,9 @@
     #statusMsg { color: #0052cc; font-weight: bold; margin-bottom: 1rem; height: 20px; }
     #reader { width: 100%; max-width: 400px; margin-top: 10px; display: none; border-radius: 4px; overflow: hidden; }
 
-    /* --- MODAL STYLES --- */
-    .modal-overlay { 
-      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-      background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; 
-    }
-    .modal-card { 
-      background: white; padding: 20px; border-radius: 8px; max-width: 400px; width: 90%; 
-      position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    }
-    .close-modal { 
-      position: absolute; top: 10px; right: 15px; font-size: 1.5rem; 
-      cursor: pointer; border: none; background: none; font-weight: bold; color: #555;
-    }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+    .modal-card { background: white; padding: 20px; border-radius: 8px; max-width: 400px; width: 90%; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+    .close-modal { position: absolute; top: 10px; right: 15px; font-size: 1.5rem; cursor: pointer; border: none; background: none; font-weight: bold; color: #555; }
     .close-modal:hover { color: #000; }
     .sig-image { width: 100%; border: 2px dashed #ccc; border-radius: 4px; margin-top: 15px; background: #f9f9f9; }
     .modal-details p { margin: 5px 0; font-size: 0.95em; }
@@ -80,7 +72,6 @@
       .btn-group { flex-direction: column; } 
       .btn-group button { width: 100%; } 
       .control-group { min-width: 100%; }
-      
       table, thead, tbody, th, td, tr { display: block; }
       thead tr { position: absolute; top: -9999px; left: -9999px; }
       tr { border: 1px solid #ccc; border-radius: 8px; margin-bottom: 1rem; background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 0.5rem; }
@@ -92,7 +83,6 @@
 </head>
 <body>
 
-  <!-- NEW: Header Flex Container with Kiosk Button -->
   <div class="header-container">
     <h1>IAD Package Log</h1>
     <button class="kiosk-btn" onclick="window.open('receive.html', '_blank')">📦 Open Sign-Out Kiosk</button>
@@ -107,7 +97,7 @@
       <div class="full-width">
         <label>Tracking Number / Carrier</label>
         <div style="display: flex; gap: 5px;">
-          <input type="text" id="pkgTracking" placeholder="e.g., FedEx 1Z999..." required>
+          <input type="text" id="pkgTracking" placeholder="e.g., FedEx 1Z999..." required oninput="updateMailtoLink()">
           <button type="button" class="secondary-btn" onclick="toggleScanner()" style="white-space: nowrap;">📷 Scan</button>
         </div>
         <div id="reader"></div>
@@ -115,11 +105,18 @@
       
       <div>
         <label>Date & Time Received</label>
-        <input type="datetime-local" id="pkgDate" required>
+        <input type="datetime-local" id="pkgDate" required oninput="updateMailtoLink()">
       </div>
+      
       <div>
         <label>Recipient Name</label>
-        <input type="text" id="pkgRecipient" required>
+        <input type="text" id="pkgRecipient" list="recipientList" oninput="handleRecipientSelection()" placeholder="Select or type..." required>
+        <datalist id="recipientList"></datalist>
+      </div>
+      
+      <div>
+        <label>Recipient Email (Optional)</label>
+        <input type="email" id="pkgEmail" placeholder="e.g., jane@domain.com" oninput="updateMailtoLink()">
       </div>
       
       <div>
@@ -131,17 +128,23 @@
       
       <div>
         <label>Sender / Vendor</label>
-        <input type="text" id="pkgSender" placeholder="e.g., Amazon, Dell, Jane Doe" required>
+        <input type="text" id="pkgSender" placeholder="e.g., Amazon, Dell" required oninput="updateMailtoLink()">
       </div>
+      
       <div>
         <label>Current Status</label>
-        <select id="pkgStatus" required>
+        <select id="pkgStatus" required onchange="updateMailtoLink()">
           <option value="">Loading...</option>
         </select>
       </div>
+      
       <div class="full-width">
         <label>Notes (Optional)</label>
-        <textarea id="pkgNotes" rows="2" placeholder="Damage reported, needs signature, etc."></textarea>
+        <textarea id="pkgNotes" rows="2" placeholder="Damage reported, needs signature, etc." oninput="updateMailtoLink()"></textarea>
+      </div>
+      
+      <div id="emailNoticeContainer" class="full-width" style="display: none; margin-bottom: -10px; margin-top: 10px;">
+        <a id="emailNoticeBtn" href="#" target="_blank" class="action-btn-link email-btn">📧 Draft Email Notice to Recipient</a>
       </div>
     </div>
 
@@ -234,6 +237,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbw_zV8BJ1Lcdnc36vSfhUUDxCpXOaYpa8H95eQQjP6iu33TfiilTgy247keK44gH_ZKfQ/exec";
     
     let packageData = [];
+    let configRecipients = []; 
 
     function setCurrentDateTime() {
       const now = new Date();
@@ -254,6 +258,7 @@
       
       html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 100 } }, (decodedText) => {
         document.getElementById('pkgTracking').value = decodedText;
+        updateMailtoLink(); 
         html5QrCode.stop().then(() => { readerDiv.style.display = 'none'; });
       }, () => {}).catch(err => {
         alert("Camera error. Please ensure you have granted permissions.");
@@ -266,30 +271,86 @@
         const response = await fetch(API_URL + "?action=getConfig");
         const config = await response.json();
         
+        // Departments
         const pkgDept = document.getElementById('pkgDept');
         const filterDept = document.getElementById('filterDept');
         pkgDept.innerHTML = '<option value="">Select Department...</option>';
         filterDept.innerHTML = '<option value="">All Departments</option>';
-        
         config.departments.forEach(dept => {
           pkgDept.innerHTML += `<option value="${escapeHTML(dept)}">${escapeHTML(dept)}</option>`;
           filterDept.innerHTML += `<option value="${escapeHTML(dept)}">${escapeHTML(dept)}</option>`;
         });
 
+        // Statuses
         const pkgStatus = document.getElementById('pkgStatus');
         const filterStatus = document.getElementById('filterStatus');
         pkgStatus.innerHTML = '';
         filterStatus.innerHTML = '<option value="">All Statuses</option>';
-        
         config.statuses.forEach(status => {
           pkgStatus.innerHTML += `<option value="${escapeHTML(status)}">${escapeHTML(status)}</option>`;
           filterStatus.innerHTML += `<option value="${escapeHTML(status)}">${escapeHTML(status)}</option>`;
         });
         
+        // Populate Recipients Datalist
+        configRecipients = config.recipients || [];
+        const recipientList = document.getElementById('recipientList');
+        recipientList.innerHTML = '';
+        configRecipients.forEach(rec => {
+          recipientList.innerHTML += `<option value="${escapeHTML(rec.name)}"></option>`;
+        });
+        
         document.getElementById('statusMsg').textContent = "";
       } catch (error) {
         console.error("Error loading configuration.", error);
-        document.getElementById('statusMsg').textContent = "Failed to load Departments/Statuses.";
+        document.getElementById('statusMsg').textContent = "Failed to load configuration.";
+      }
+    }
+
+    function handleRecipientSelection() {
+      const nameInput = document.getElementById('pkgRecipient').value;
+      const emailField = document.getElementById('pkgEmail');
+      
+      const matchedRecipient = configRecipients.find(r => r.name.toLowerCase() === nameInput.toLowerCase());
+      
+      if (matchedRecipient && matchedRecipient.email) {
+        emailField.value = matchedRecipient.email; 
+      }
+      
+      updateMailtoLink();
+    }
+
+    // --- UPDATED: Dynamic Mailto Link Generator ---
+    function updateMailtoLink() {
+      const email = document.getElementById('pkgEmail').value;
+      const name = document.getElementById('pkgRecipient').value || 'Recipient';
+      const tracking = document.getElementById('pkgTracking').value || '[Tracking Number]';
+      const sender = document.getElementById('pkgSender').value || '[Sender]';
+      const status = document.getElementById('pkgStatus').value || '[Status]';
+      const notes = document.getElementById('pkgNotes').value || 'None';
+      
+      // Format the Date to look nice in the email
+      let rawDate = document.getElementById('pkgDate').value;
+      let displayDate = "[Date]";
+      if (rawDate) {
+        const d = new Date(rawDate);
+        if (!isNaN(d)) displayDate = d.toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + " EDT";
+      }
+
+      // Automatically inserted Kiosk URL
+      const kioskUrl = "https://um.interamerica.org/receive";
+      
+      const btnContainer = document.getElementById('emailNoticeContainer');
+      const btn = document.getElementById('emailNoticeBtn');
+      
+      // Only show the button if an email has been provided
+      if (email && email.includes('@')) {
+        const subject = encodeURIComponent(`Package Notification: ${tracking}`);
+        const body = encodeURIComponent(`Hello ${name},\n\nA package has been logged for you.\n\nDate Received: ${displayDate}\nSender: ${sender}\nTracking: ${tracking}\nNotes: ${notes}\nCurrent Status: ${status}\n\nPlease sign out your package at the kiosk:\n${kioskUrl}`);
+        
+        btn.href = `mailto:${email}?subject=${subject}&body=${body}`;
+        btnContainer.style.display = 'block';
+      } else {
+        btnContainer.style.display = 'none';
       }
     }
 
@@ -385,7 +446,8 @@
               '${escapeHTML(row['Sender'])}', 
               '${escapeHTML(row['Date Received'])}', 
               '${escapeHTML(row['Status'])}', 
-              '${escapeHTML(row['Notes'])}'
+              '${escapeHTML(row['Notes'])}',
+              '${escapeHTML(row['Recipient Email'] || '')}'
             )">Edit</button>
             <button class="action-btn delete-btn" onclick="deleteRecord('${row.ID}')">Del</button>
           </td>
@@ -394,7 +456,6 @@
       });
     }
 
-    // --- Modal Functions ---
     function openSignatureModal(id) {
       const pkg = packageData.find(p => p.ID === id);
       if (!pkg) return;
@@ -439,7 +500,6 @@
       }
     }
 
-    // --- UPDATED: Button Feedback & Form Submission ---
     document.getElementById('dataForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       
@@ -457,7 +517,8 @@
         "Sender": document.getElementById('pkgSender').value,
         "Date Received": document.getElementById('pkgDate').value,
         "Status": document.getElementById('pkgStatus').value,
-        "Notes": document.getElementById('pkgNotes').value
+        "Notes": document.getElementById('pkgNotes').value,
+        "Recipient Email": document.getElementById('pkgEmail').value 
       };
 
       if (isUpdate) {
@@ -471,7 +532,7 @@
       submitBtn.disabled = false;
     });
 
-    function editRecord(id, track, rec, dept, sender, date, status, notes) {
+    function editRecord(id, track, rec, dept, sender, date, status, notes, email) {
       document.getElementById('itemId').value = id;
       document.getElementById('pkgTracking').value = track;
       document.getElementById('pkgRecipient').value = rec;
@@ -479,6 +540,7 @@
       document.getElementById('pkgSender').value = sender;
       document.getElementById('pkgStatus').value = status;
       document.getElementById('pkgNotes').value = notes;
+      document.getElementById('pkgEmail').value = email || '';
       
       if (date) {
         const d = new Date(date);
@@ -487,6 +549,8 @@
           document.getElementById('pkgDate').value = d.toISOString().slice(0, 16);
         }
       }
+
+      updateMailtoLink();
 
       document.getElementById('submitBtn').textContent = "Update Package";
       document.getElementById('cancelBtn').style.display = "inline-block";
@@ -505,6 +569,7 @@
       document.getElementById('itemId').value = "";
       document.getElementById('submitBtn').textContent = "Log Package";
       document.getElementById('cancelBtn').style.display = "none";
+      document.getElementById('emailNoticeContainer').style.display = "none";
       setCurrentDateTime();
     }
 
