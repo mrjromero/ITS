@@ -4,12 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>IAD Package Log</title>
+  
+  <!-- Barcode Scanner Library -->
   <script src="https://unpkg.com/html5-qrcode"></script>
+  <!-- Excel Export Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   
   <style>
     body { font-family: system-ui, sans-serif; max-width: 1000px; margin: 2rem auto; padding: 0 1rem; color: #333; }
     
     .header-container { display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 15px; }
+    .header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     h1 { font-size: 1.8rem; margin: 0; }
     h2 { border-bottom: 2px solid #0052cc; padding-bottom: 0.5rem; margin-top: 2rem; font-size: 1.4rem; }
     
@@ -35,6 +40,8 @@
     .secondary-btn:hover { background: #5a6268; }
     .kiosk-btn { background: #28a745; color: white; }
     .kiosk-btn:hover { background: #218838; }
+    .report-btn { background: #6f42c1; color: white; }
+    .report-btn:hover { background: #59339d; }
     
     .email-btn { background: #17a2b8; color: white; text-align: center; display: block; text-decoration: none; width: 100%; box-sizing: border-box; }
     .email-btn:hover { background: #138496; }
@@ -67,12 +74,12 @@
 
     /* --- MODAL STYLES --- */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
-    .modal-card { background: white; padding: 20px; border-radius: 8px; max-width: 450px; width: 90%; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+    .modal-card { background: white; padding: 20px; border-radius: 8px; max-width: 450px; width: 90%; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto; }
     .close-modal { position: absolute; top: 10px; right: 15px; font-size: 1.5rem; cursor: pointer; border: none; background: none; font-weight: bold; color: #555; }
     .close-modal:hover { color: #000; }
     .sig-image { width: 100%; border: 2px dashed #ccc; border-radius: 4px; margin-top: 15px; background: #f9f9f9; }
     
-    /* Config Modal Specific */
+    /* Config & Report Modal Specific */
     .config-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
     .config-item-details { flex: 1; overflow: hidden; text-overflow: ellipsis; }
     .config-item-actions button { margin-left: 5px; padding: 4px 8px; font-size: 0.75em; }
@@ -80,7 +87,8 @@
 
     @media (max-width: 768px) {
       .header-container { flex-direction: column; align-items: flex-start; }
-      .kiosk-btn { width: 100%; }
+      .header-actions { width: 100%; flex-direction: column; }
+      .header-actions button { width: 100%; }
       .form-grid { grid-template-columns: 1fr; } 
       .full-width { grid-column: auto; }
       .btn-group { flex-direction: column; } 
@@ -99,7 +107,10 @@
 
   <div class="header-container">
     <h1>IAD Package Log</h1>
-    <button class="kiosk-btn" onclick="window.open('receive.html', '_blank')">📦 Open Sign-Out Kiosk</button>
+    <div class="header-actions">
+      <button class="report-btn" onclick="openReportModal()">📄 Print / Export Report</button>
+      <button class="kiosk-btn" onclick="window.open('receive.html', '_blank')">📦 Open Sign-Out Kiosk</button>
+    </div>
   </div>
   
   <div id="statusMsg">Loading configuration...</div>
@@ -245,9 +256,9 @@
   </div>
 
   <!-- --- SIGNATURE MODAL --- -->
-  <div id="sigModal" class="modal-overlay" onclick="closeModal(event)">
+  <div id="sigModal" class="modal-overlay" onclick="closeModal(event, 'sigModal')">
     <div class="modal-card" onclick="event.stopPropagation()">
-      <button class="close-modal" onclick="closeModal()">&times;</button>
+      <button class="close-modal" onclick="closeModal(null, 'sigModal')">&times;</button>
       <h3 style="margin-top:0; color:#0052cc;">Proof of Delivery</h3>
       <div class="modal-details">
         <p><strong>Tracking:</strong> <span id="modalTracking"></span></p>
@@ -259,28 +270,53 @@
     </div>
   </div>
 
-  <!-- --- NEW: CONFIG MANAGEMENT MODAL --- -->
-  <div id="configModal" class="modal-overlay" onclick="closeConfigModal(event)">
+  <!-- --- CONFIG MANAGEMENT MODAL --- -->
+  <div id="configModal" class="modal-overlay" onclick="closeModal(event, 'configModal')">
     <div class="modal-card" onclick="event.stopPropagation()">
-      <button class="close-modal" onclick="closeConfigModal()">&times;</button>
+      <button class="close-modal" onclick="closeModal(null, 'configModal')">&times;</button>
       <h3 id="configModalTitle" style="margin-top:0; color:#0052cc;">Manage List</h3>
-      
-      <!-- Mini Form to Add/Edit -->
       <div class="config-form">
         <label>Name</label>
         <input type="text" id="configName" style="margin-bottom: 10px;">
-        
         <div id="configEmailContainer" style="display: none;">
           <label>Email (Optional)</label>
           <input type="email" id="configEmail" style="margin-bottom: 10px;">
         </div>
-        
         <button id="configSubmitBtn" class="primary-btn" style="width: 100%;" onclick="saveConfigItem()">Add New</button>
       </div>
+      <div id="configListArea" style="max-height: 250px; overflow-y: auto; padding-right: 5px;"></div>
+    </div>
+  </div>
+
+  <!-- --- NEW: REPORT EXPORT MODAL --- -->
+  <div id="reportModal" class="modal-overlay" onclick="closeModal(event, 'reportModal')">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <button class="close-modal" onclick="closeModal(null, 'reportModal')">&times;</button>
+      <h3 style="margin-top:0; color:#0052cc;">Generate Report</h3>
+      <p style="font-size:0.9em; color:#555; margin-top:-10px;">Select filters to export package history.</p>
       
-      <!-- Dynamic List of Items -->
-      <div id="configListArea" style="max-height: 250px; overflow-y: auto; padding-right: 5px;">
-        <!-- Items generated by JS -->
+      <div class="config-form">
+        <label>Start Date</label>
+        <input type="date" id="reportStartDate" style="margin-bottom: 10px;">
+        
+        <label>End Date</label>
+        <input type="date" id="reportEndDate" style="margin-bottom: 10px;">
+        
+        <label>Department</label>
+        <select id="reportDept" style="margin-bottom: 10px;">
+          <option value="">All Departments</option>
+        </select>
+        
+        <label>Status</label>
+        <select id="reportStatus" style="margin-bottom: 20px;">
+          <option value="">All Statuses</option>
+        </select>
+        
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <button class="primary-btn" onclick="exportExcel()">⬇️ Download Excel (.xlsx)</button>
+          <button class="secondary-btn" style="background:#28a745;" onclick="exportCSV()">⬇️ Download CSV</button>
+          <button class="secondary-btn" style="background:#6c757d;" onclick="printReport()">🖨️ Print / Save as PDF</button>
+        </div>
       </div>
     </div>
   </div>
@@ -329,21 +365,33 @@
         configDepartments = config.departments || [];
         const pkgDept = document.getElementById('pkgDept');
         const filterDept = document.getElementById('filterDept');
+        const reportDept = document.getElementById('reportDept'); // NEW: For Report Modal
+        
         pkgDept.innerHTML = '<option value="">Select Department...</option>';
         filterDept.innerHTML = '<option value="">All Departments</option>';
+        reportDept.innerHTML = '<option value="">All Departments</option>';
+        
         configDepartments.forEach(dept => {
-          pkgDept.innerHTML += `<option value="${escapeHTML(dept)}">${escapeHTML(dept)}</option>`;
-          filterDept.innerHTML += `<option value="${escapeHTML(dept)}">${escapeHTML(dept)}</option>`;
+          const opt = `<option value="${escapeHTML(dept)}">${escapeHTML(dept)}</option>`;
+          pkgDept.innerHTML += opt;
+          filterDept.innerHTML += opt;
+          reportDept.innerHTML += opt;
         });
 
         // Statuses
         const pkgStatus = document.getElementById('pkgStatus');
         const filterStatus = document.getElementById('filterStatus');
+        const reportStatus = document.getElementById('reportStatus'); // NEW: For Report Modal
+        
         pkgStatus.innerHTML = '';
         filterStatus.innerHTML = '<option value="">All Statuses</option>';
+        reportStatus.innerHTML = '<option value="">All Statuses</option>';
+        
         (config.statuses || []).forEach(status => {
-          pkgStatus.innerHTML += `<option value="${escapeHTML(status)}">${escapeHTML(status)}</option>`;
-          filterStatus.innerHTML += `<option value="${escapeHTML(status)}">${escapeHTML(status)}</option>`;
+          const opt = `<option value="${escapeHTML(status)}">${escapeHTML(status)}</option>`;
+          pkgStatus.innerHTML += opt;
+          filterStatus.innerHTML += opt;
+          reportStatus.innerHTML += opt;
         });
         
         // Recipients
@@ -407,7 +455,7 @@
       }
     }
 
-    // --- NEW: CONFIG MODAL LOGIC ---
+    // --- CONFIG MODAL LOGIC ---
     let currentConfigType = '';
     let editingConfigOldName = null;
 
@@ -422,15 +470,9 @@
       document.getElementById('configModal').style.display = 'flex';
     }
 
-    function closeConfigModal(e) {
-      if (e && e.target.id !== 'configModal' && e.target.className !== 'close-modal') return;
-      document.getElementById('configModal').style.display = 'none';
-    }
-
     function renderConfigList() {
       const listArea = document.getElementById('configListArea');
       listArea.innerHTML = '';
-      
       let items = [];
       if (currentConfigType === 'Recipients') items = configRecipients;
       else if (currentConfigType === 'Departments') items = configDepartments.map(d => ({name: d}));
@@ -472,11 +514,7 @@
       btn.textContent = "Saving...";
       
       const rowData = currentConfigType === 'Recipients' ? [name, email] : [name];
-      
-      const payload = {
-        action: editingConfigOldName ? 'updateConfig' : 'addConfig',
-        data: { type: currentConfigType, oldName: editingConfigOldName, row: rowData }
-      };
+      const payload = { action: editingConfigOldName ? 'updateConfig' : 'addConfig', data: { type: currentConfigType, oldName: editingConfigOldName, row: rowData } };
       
       try {
         await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
@@ -499,18 +537,162 @@
     async function deleteConfigItem(name) {
       if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
       const payload = { action: 'deleteConfig', data: { type: currentConfigType, name: name } };
-      
       try {
         await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
         document.getElementById('configListArea').innerHTML = '<p style="text-align:center;">Deleting...</p>';
-        setTimeout(async () => {
-          await loadConfig();
-          renderConfigList();
-        }, 1200);
+        setTimeout(async () => { await loadConfig(); renderConfigList(); }, 1200);
       } catch (err) { alert("Error deleting."); }
     }
-    // --- END CONFIG MODAL LOGIC ---
 
+    // --- NEW: REPORT EXPORT LOGIC ---
+    function openReportModal() {
+      // Default Start Date to 30 days ago, End Date to today
+      const today = new Date();
+      const lastMonth = new Date();
+      lastMonth.setDate(today.getDate() - 30);
+      
+      document.getElementById('reportEndDate').value = today.toISOString().split('T')[0];
+      document.getElementById('reportStartDate').value = lastMonth.toISOString().split('T')[0];
+      
+      document.getElementById('reportDept').value = "";
+      document.getElementById('reportStatus').value = "";
+      
+      document.getElementById('reportModal').style.display = 'flex';
+    }
+
+    function getFilteredReportData() {
+      const startStr = document.getElementById('reportStartDate').value;
+      const endStr = document.getElementById('reportEndDate').value;
+      const dept = document.getElementById('reportDept').value;
+      const status = document.getElementById('reportStatus').value;
+
+      // Ensure dates evaluate properly by adding time components
+      const start = startStr ? new Date(startStr + "T00:00:00") : null;
+      const end = endStr ? new Date(endStr + "T23:59:59") : null;
+
+      // Filter packageData and map only the clean columns we care about
+      return packageData.filter(row => {
+        let match = true;
+        if (row['Date Received']) {
+          const d = new Date(row['Date Received']);
+          if (start && !isNaN(start) && d < start) match = false;
+          if (end && !isNaN(end) && d > end) match = false;
+        }
+        if (dept && row['Department'] !== dept) match = false;
+        if (status && row['Status'] !== status) match = false;
+        return match;
+      }).map(row => ({
+        "Date Received": row['Date Received'] ? new Date(row['Date Received']).toLocaleString('en-US', { timeZone: 'America/New_York', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : "",
+        "Tracking / Carrier": row['Tracking Number'],
+        "Recipient": row['Recipient'],
+        "Department": row['Department'],
+        "Sender": row['Sender'],
+        "Status": row['Status'],
+        "Notes": row['Notes']
+      }));
+    }
+
+    function exportExcel() {
+      const data = getFilteredReportData();
+      if(data.length === 0) return alert("No packages found for the selected filters.");
+      
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Package Report");
+      
+      // Auto-size columns slightly
+      const wscols = [{wch:20}, {wch:25}, {wch:20}, {wch:20}, {wch:20}, {wch:15}, {wch:30}];
+      worksheet['!cols'] = wscols;
+
+      XLSX.writeFile(workbook, `IAD_Package_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+    }
+
+    function exportCSV() {
+      const data = getFilteredReportData();
+      if(data.length === 0) return alert("No packages found for the selected filters.");
+      
+      const headers = Object.keys(data[0]);
+      const csvRows = [headers.join(',')];
+
+      data.forEach(row => {
+        const values = headers.map(header => {
+          let val = row[header] === null || row[header] === undefined ? '' : row[header].toString();
+          // Escape quotes and wrap in quotes if there are commas
+          if (val.includes(',') || val.includes('"') || val.includes('\n')) {
+            val = `"${val.replace(/"/g, '""')}"`;
+          }
+          return val;
+        });
+        csvRows.push(values.join(','));
+      });
+
+      const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('href', url);
+      a.setAttribute('download', `IAD_Package_Report_${new Date().toISOString().split('T')[0]}.csv`);
+      a.click();
+    }
+
+    function printReport() {
+      const data = getFilteredReportData();
+      let html = `
+        <html>
+        <head>
+          <title>Package Report</title>
+          <style>
+            body { font-family: system-ui, sans-serif; color: #333; margin: 20px; }
+            h2 { border-bottom: 2px solid #0052cc; padding-bottom: 10px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+            th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            @media print {
+              body { margin: 0; padding: 15px; }
+              table { font-size: 12px; }
+            }
+          </style>
+        </head>
+        <body>
+          <h2>IAD Package Log Report</h2>
+          <p>Generated on: ${new Date().toLocaleString()}</p>
+      `;
+
+      if (data.length === 0) {
+        html += "<p><strong>No records found for the selected criteria.</strong></p>";
+      } else {
+        html += "<table><thead><tr>";
+        Object.keys(data[0]).forEach(key => html += `<th>${escapeHTML(key)}</th>`);
+        html += "</tr></thead><tbody>";
+        data.forEach(row => {
+          html += "<tr>";
+          Object.values(row).forEach(val => html += `<td>${escapeHTML(val || "")}</td>`);
+          html += "</tr>";
+        });
+        html += "</tbody></table>";
+      }
+
+      html += "</body></html>";
+      
+      const printWin = window.open('', '', 'width=900,height=600');
+      printWin.document.write(html);
+      printWin.document.close();
+      printWin.focus();
+      
+      // Give the browser a tiny delay to render the table before calling print
+      setTimeout(() => {
+        printWin.print();
+        printWin.close();
+      }, 250);
+    }
+    // --- END REPORT EXPORT LOGIC ---
+
+
+    // Universal Modal Close Handler
+    function closeModal(e, modalId) {
+      if (e && e.target.id !== modalId && e.target.className !== 'close-modal') return;
+      document.getElementById(modalId).style.display = 'none';
+      if (modalId === 'sigModal') document.getElementById('modalImg').src = ''; 
+    }
 
     async function loadData() {
       const tbody = document.getElementById('tableBody');
@@ -519,10 +701,8 @@
       try {
         const timeRange = document.getElementById('timeRange').value;
         const fetchUrl = `${API_URL}?monthsBack=${timeRange}`;
-        
         const response = await fetch(fetchUrl);
         const data = await response.json();
-        
         packageData = data.filter(row => row.ID);
         renderTable(); 
       } catch (error) {
@@ -608,7 +788,6 @@
       });
     }
 
-    // --- Signature Modal Functions ---
     function openSignatureModal(id) {
       const pkg = packageData.find(p => p.ID === id);
       if (!pkg) return;
@@ -623,12 +802,6 @@
       document.getElementById('modalDate').textContent = displayDate;
       document.getElementById('modalImg').src = pkg['Signature'];
       document.getElementById('sigModal').style.display = 'flex';
-    }
-
-    function closeModal(e) {
-      if (e && e.target.id !== 'sigModal' && e.target.className !== 'close-modal') return;
-      document.getElementById('sigModal').style.display = 'none';
-      document.getElementById('modalImg').src = ''; 
     }
 
     async function sendData(action, dataObj) {
