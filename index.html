@@ -6,44 +6,71 @@
   <title>Cool Background</title>
   <style>
     body {
-      background-color: #0d1117;
       margin: 0;
-      overflow: hidden; /* Prevents scrollbars if the glow extends past the screen */
+      background-color: #0d1117;
+      overflow: hidden; /* Prevents scrollbars */
     }
     
-    .glow-container {
-      position: relative;
-      height: 100vh;
+    canvas {
       width: 100vw;
+      height: 100vh;
+      display: block;
     }
 
-    /* The interactive glow overlay */
-    .glow-container::before {
-      content: "";
+    /* Keeps your text on top and allows the mouse to interact with the canvas behind it */
+    .content-layer {
       position: absolute;
       inset: 0;
-      pointer-events: none;
-      z-index: 1;
-      
-      /* The gradient uses CSS variables for dynamic positioning */
-      background: radial-gradient(
-        600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-        rgba(255, 102, 0, 0.15),
-        transparent 40%
-      );
+      pointer-events: none; 
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-family: sans-serif;
     }
   </style>
 </head>
 <body>
-  <div class="glow-container"></div>
+  <!-- Foreground Content -->
+  <div class="content-layer">
+    <h1>Move your mouse around!</h1>
+  </div>
 
-  <script>
-    const container = document.querySelector('.glow-container');
+  <!-- The WebGL Canvas -->
+  <canvas id="fluid-canvas"></canvas>
+
+  <!-- Import the WebGL Fluid Simulation library via CDN -->
+  <script type="module">
+    import webGLFluidSimulation from 'https://cdn.skypack.dev/webgl-fluid';
     
-    // Track mouse movement and update CSS variables directly
-    container.addEventListener('mousemove', (e) => {
-      container.style.setProperty('--mouse-x', `${e.clientX}px`);
-      container.style.setProperty('--mouse-y', `${e.clientY}px`);
+    // Initialize the physics simulation on the canvas
+    webGLFluidSimulation(document.getElementById('fluid-canvas'), {
+      IMMEDIATE: true, 
+      TRIGGER: 'hover',
+      SIM_RESOLUTION: 128,
+      DYE_RESOLUTION: 1024,
+      DENSITY_DISSIPATION: 1.5, /* How fast the colors fade */
+      VELOCITY_DISSIPATION: 0.2, /* How fast the momentum stops */
+      PRESSURE: 0.8,
+      PRESSURE_ITERATIONS: 20,
+      CURL: 30, /* The amount of swirl/vorticity */
+      SPLAT_RADIUS: 0.25, /* Size of the mouse brush */
+      SPLAT_FORCE: 6000,
+      SHADING: true,
+      COLORFUL: true, /* Continuously shifts colors */
+      COLOR_UPDATE_SPEED: 10,
+      BACK_COLOR: { r: 13, g: 17, b: 23 }, /* Matches your #0d1117 background */
+      TRANSPARENT: false,
+      BLOOM: true,
+      BLOOM_ITERATIONS: 8,
+      BLOOM_RESOLUTION: 256,
+      BLOOM_INTENSITY: 0.8,
+      BLOOM_THRESHOLD: 0.6,
+      BLOOM_SOFT_KNEE: 0.7,
+      SUNRAYS: true,
+      SUNRAYS_RESOLUTION: 196,
+      SUNRAYS_WEIGHT: 1.0,
     });
   </script>
 </body>
