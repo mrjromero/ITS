@@ -118,3 +118,13 @@ To restore the exact pre-update pair, copy both files from `gs/backups/departure
 If attendee data or schedules have changed since the backup, review those changes before overwriting the workbook. For a code-only rollback, the active workbook would also need to be compatible with the old time-only parser.
 
 The backup is a recovery copy, not a separate production app. The active files remain `gs/departures.html` and `gs/departures.xlsx`.
+
+## October 6 follow-up: correct the schedule date
+
+The live attendee records all used **Oct 8**, while the schedule section in B4 still used **9/11/2026**. This prevented all 20 attendee records from matching. The earlier checks used the schedule date in synthetic lookups and missed this cross-sheet mismatch.
+
+B4 was corrected to **10/8/2026**, interpreting the intended schedule date from the attendee records and retaining the existing year. Flight ranges, departure times, transport instructions, and attendee records were unchanged. The attendee sheet still has the legacy name “Departures - 11 Sep”; matching uses its Date column, not its sheet name.
+
+The corrected workbook was checked against every actual attendee record: 20 of 20 matched exactly one schedule rule (2 instruction records and 18 timed-departure records). These are row counts, not passenger counts.
+
+**Required check for future workbook edits:** run every actual attendee Date and Time through the lookup, report unmatched records, and review all schedule dates before publishing. Synthetic lookups alone are insufficient. Do not bypass date matching to conceal a mismatch.
