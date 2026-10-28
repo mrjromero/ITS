@@ -128,3 +128,14 @@ B4 was corrected to **10/8/2026**, interpreting the intended schedule date from 
 The corrected workbook was checked against every actual attendee record: 20 of 20 matched exactly one schedule rule (2 instruction records and 18 timed-departure records). These are row counts, not passenger counts.
 
 **Required check for future workbook edits:** run every actual attendee Date and Time through the lookup, report unmatched records, and review all schedule dates before publishing. Synthetic lookups alone are insufficient. Do not bypass date matching to conceal a mismatch.
+
+
+## October 28, 2026: Bogotá Annual Council production release
+
+Canonical attendee link: https://its.interamerica.org/gs/departures . The page loads departures.xlsx and contains 139 attendee records / 189 passengers for November 3–5, 2026. All 139 records resolve to one of 19 hotel pickup rules. The final reviewed workbook incorporates coordinator corrections, name capitalization cleanup, and the user-approved official Wingo November 4 05:10 departure (02:00 hotel pickup).
+
+Dated hotel pickups use an Excel date/time displayed as `m/d/yyyy h:mm AM/PM`. The app displays that calendar date in English, Spanish or French. This keeps the November 5 01:45 flight distinct from its November 4 22:00 hotel pickup. Other clock-only and instruction behavior is unchanged. Test warnings are removed from production; PDF export is named Bogota_Departure_Information.pdf.
+
+Recovery: the complete previous production pair remains at commit `9b8cb9198d70e419ebd0ad870af19df488aa3deb`, paths gs/departures.html and gs/departures.xlsx. Restore only those two files if needed. This Git-history backup avoids serving a second old passenger page. Earlier backup folders remain untouched. Temporary Bogotá review copies may be removed from main only after successful production verification; they remain recoverable at the same commit.
+
+Validation: actual saved workbook through the app's SheetJS parser, all attendee lookups and counts, cross-midnight boundaries, EN/ES/FR and browser PDF. Production deployment and canonical URL must be verified after publication.
