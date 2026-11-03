@@ -139,3 +139,18 @@ Dated hotel pickups use an Excel date/time displayed as `m/d/yyyy h:mm AM/PM`. T
 Recovery: the complete previous production pair remains at commit `9b8cb9198d70e419ebd0ad870af19df488aa3deb`, paths gs/departures.html and gs/departures.xlsx. Restore only those two files if needed. This Git-history backup avoids serving a second old passenger page. Earlier backup folders remain untouched. Temporary Bogotá review copies may be removed from main only after successful production verification; they remain recoverable at the same commit.
 
 Validation: actual saved workbook through the app's SheetJS parser, all attendee lookups and counts, cross-midnight boundaries, EN/ES/FR and browser PDF. Production deployment and canonical URL must be verified after publication.
+
+
+## November 3, 2026: separately coordinated transportation
+
+The optional attendee column **Transportation Status** accepts `arranged separately` (case-insensitive). Empty cells retain regular group scheduling. Exception attendees remain searchable, but their notice, clipboard text and PDF show only their name, date and the translated instruction to follow Crussana's arrangements. Flight times, passenger counts and the general hotel schedule are omitted from these results. Exceptions take precedence even when their date or time cannot be parsed. Search also ignores periods in names.
+
+Count only `groupPeople()` for scheduled group transportation, and use `attendeeDeparture(person)` when resolving an attendee's pickup. Never derive exception pickups from the shared flight ranges. Unknown exception PAX may remain blank and must not be treated as a verified zero or included in a combined passenger total.
+
+Current scope: **144 searchable records = 137 regular records + 7 exceptions**. The regular records total **186 passengers**, all with resolved pickups. November 4 pickup counts: 02:00=16, 03:00=41, 04:00=49, 06:00=13, 08:00=25, 10:00=37, 22:00=2. November 5 10:00=3. No regular group passengers remain on November 3.
+
+The six approved November 4 updates were applied to the existing production workbook. The verified Wingo 05:10 times and dated November 4 22:00 pickup for the November 5 01:45 flight are preserved. The schedule sheet is unchanged. No private coordinator notes are stored in this workbook.
+
+Recovery: the complete previous production pair remains at commit `23ab342f32c6b243d4566a0e08122f7d74436964`. Restore only `gs/departures.html` and `gs/departures.xlsx` if needed. Do not publish another old passenger lookup as a backup.
+
+Browser regression test: `node gs/tests/departures.cjs <path-to-SheetJS-0.18.5-JS> <path-to-Playwright-module> <path-to-Chromium-executable>`. Public tests use synthetic records only. They cover regular passenger counts, 21 exception/language combinations, missing-time precedence, punctuation-insensitive search, schedule boundaries and overnight dates. Clipboard text and the content handed to PDF export are checked; the PDF generator is stubbed. Separate private verification covered every actual attendee, all corrected departures, and preservation of unrelated records and the schedule.

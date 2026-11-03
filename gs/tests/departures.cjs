@@ -1,0 +1,22 @@
+// Synthetic fixtures only; never commit real attendee test data.
+// node departures.cjs <SheetJS 0.18.5 JS> <Playwright module> <Chromium executable>
+const fs=require('fs'),path=require('path'),assert=require('node:assert/strict');
+const X=require(path.resolve(process.argv[2])),{chromium}=require(path.resolve(process.argv[3]));
+const rows=[['Date','Time','Flight','Name','PAX','Union','Airline','Transportation Status'],['Nov 4, 2040','7:50 AM','TEST1','Example Regular',2,'Example','Example',''],['Nov 5, 2040','1:45 AM','TEST2','Example Overnight',1,'Example','Example','']];
+for(let i=0;i<7;i++)rows.push(['Nov 3, 2040',['','18 PM','7:50 AM'][i%3],'','Example. Separate '+i,'','','','arranged separately']);
+const wb=X.utils.book_new();X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet(rows),'Attendees');
+X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet([['11/4/2040'],['7:00 AM - 7:50 AM','3:00 AM'],['8:00 AM - 9:00 AM','4:00 AM'],['11/5/2040'],['1:45 AM - 1:45 AM','11/4/2040 10:00 PM']]),'Departure Schedule');
+const bytes=Buffer.from(X.write(wb,{type:'array',bookType:'xlsx'}));
+const html=fs.readFileSync(path.resolve(__dirname,'../departures.html'),'utf8').replace('language();load();','window.__test={departure,attendeeDeparture,display,groupPeople,get people(){return people},get clip(){return clip}};language();load();');
+(async()=>{const browser=await chromium.launch({executablePath:process.argv[4],headless:true});try{
+ const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.route('**/*',r=>{const u=r.request().url();if(u.includes('xlsx.full.min.js'))return r.fulfill({body:fs.readFileSync(process.argv[2]),contentType:'text/javascript'});if(u.includes('html2pdf'))return r.fulfill({body:'window.html2pdf=()=>({set(){return this},from(e){window.pdfContent=e.textContent;return this},save(){}})',contentType:'text/javascript'});if(u.includes('departures.xlsx'))return r.fulfill({body:bytes});return r.fulfill({body:html,contentType:'text/html'});});
+ await page.goto('http://localhost/departures');await page.locator('#search:not(.hidden)').waitFor();
+ assert.deepEqual(await page.evaluate(()=>{const t=window.__test;return [t.people.length,t.groupPeople().length,t.groupPeople().reduce((n,p)=>n+Number(p.PAX),0)]}),[9,2,3]);
+ const titles={en:'Transportation arranged separately',es:'Transporte coordinado por separado',fr:'Transport organisé séparément'};
+ for(const lang of ['en','es','fr']){await page.selectOption('#lang',lang);for(let i=0;i<7;i++){await page.fill('#q','Example Separate '+i);await page.getByRole('button',{name:'Example. Separate '+i,exact:true}).click();const text=await page.locator('#printable').innerText();assert(text.includes(titles[lang]));assert(!text.includes('18 PM'));assert(!text.includes('PAX'));assert.equal(await page.locator('.highlight').count(),0);assert.equal(await page.locator('#printable table').count(),1);assert((await page.evaluate(()=>window.__test.clip)).includes(titles[lang]));await page.click('#pdf');assert((await page.evaluate(()=>window.pdfContent)).includes(titles[lang]));}}
+ await page.selectOption('#lang','en');await page.fill('#q','Example Regular');await page.getByRole('button',{name:'Example Regular',exact:true}).click();assert.equal(await page.locator('.highlight').innerText(),'3:00 AM');
+ await page.fill('#q','Example Overnight');await page.getByRole('button',{name:'Example Overnight',exact:true}).click();for(const [lang,date] of [['en','November 4, 2040'],['es','4 de noviembre de 2040'],['fr','4 novembre 2040']]){await page.selectOption('#lang',lang);assert((await page.locator('.highlight').innerText()).includes(date));}
+ await page.evaluate(()=>{const t=window.__test;for(const Time of ['',null,'18 PM','7:50 AM']){const p={Name:'Example',Date:'invalid',Time,'Transportation Status':'arranged separately'};if(t.attendeeDeparture(p)!==null)throw Error('Exception pickup');t.display(p);if(document.querySelector('.highlight'))throw Error('Exception highlight');}if(t.departure('Nov 4, 2040','1:45 AM')!==null)throw Error('Wrong date');if(t.departure('Nov 4, 2040','7:51 AM')!==null)throw Error('Gap');});
+ assert.deepEqual(errors,[]);console.log('PASS: synthetic counts, 21 exception language/search/copy/PDF-content cases, missing times, boundaries and overnight dates.');
+}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1});
