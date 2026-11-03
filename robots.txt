@@ -1,2 +1,4 @@
 User-agent: *
 Disallow: /
+# Let crawlers read the noindex directives on the EBP pages.
+Allow: /EBP/
