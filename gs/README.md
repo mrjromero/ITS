@@ -154,3 +154,22 @@ The six approved November 4 updates were applied to the existing production work
 Recovery: the complete previous production pair remains at commit `23ab342f32c6b243d4566a0e08122f7d74436964`. Restore only `gs/departures.html` and `gs/departures.xlsx` if needed. Do not publish another old passenger lookup as a backup.
 
 Browser regression test: `node gs/tests/departures.cjs <path-to-SheetJS-0.18.5-JS> <path-to-Playwright-module> <path-to-Chromium-executable>`. Public tests use synthetic records only. They cover regular passenger counts, 21 exception/language combinations, missing-time precedence, punctuation-insensitive search, schedule boundaries and overnight dates. Clipboard text and the content handed to PDF export are checked; the PDF generator is stubbed. Separate private verification covered every actual attendee, all corrected departures, and preservation of unrelated records and the schedule.
+
+## Event expiration
+
+The November 7, 2026 retirement removes `gs/departures.xlsx` from the current published site. The prior production workbook remains recoverable at commit `95a314840e74342db4d17800965c9c75aace8b19`. This repository is public, so its history is public too. Restore only an approved workbook for a new event; do not restore the expired attendee roster to the live site.
+
+`EVENT_ENDS_AT` near the top of the application script is the first instant when the lookup is closed. It must include an explicit UTC offset or `Z`; never use a timezone-less date. For Bogotá, it is `2026-11-06T00:00:00-05:00`, immediately after the final departure day, November 5. Bogotá uses `America/Bogota` (UTC−05:00) throughout the year. The last listed flight is November 5 at 16:25, with its hotel pickup at 10:00. Do not use the conference closing time as the cutoff if attendees leave later.
+
+At and after the cutoff, the app shows a translated event-ended message and does not request or parse the attendee workbook. It hides and disables search, manual imports and PDF export, and clears in-memory records, the selected attendee, clipboard source text and rendered results. Open tabs check the deadline with a bounded timer, on focus, page restoration, visibility changes, before printing and before data actions. Pending workbook/import results cannot restore the lookup. A PDF being generated at the cutoff will not initiate a download afterward. Invalid or missing cutoff text fails closed with an unavailable message. Once a tab closes for expiration, changing the device clock backward will not reopen that tab.
+
+This is a display/lifecycle feature, **not access control**. It relies on the device clock. The static workbook URL, repository history, previously downloaded workbooks/PDFs and already-copied clipboard contents are not revoked. Retiring the public workbook is a separate approved publishing action. Enforced data retention requires removing it from public hosting or using a server-controlled endpoint; client-side JavaScript cannot enforce that boundary.
+
+### Reusing the app for another event
+
+1. Verify the final hotel pickup and flight dates, including overnight departures and any transport handled separately.
+2. Set `EVENT_ENDS_AT` to the approved cutoff in that event's local timezone with the correct offset for that date. Update it together with the event title, PDF filename, coordinator text and workbook. A new workbook alone does not reopen an expired event.
+3. Test before, exactly at and after the cutoff, including a tab left open across it. Do not add a public query-string or manual-upload bypass.
+4. Verify production after the approved deployment. Keep recovery in Git history instead of publishing an old attendee page as a backup.
+
+Deterministic lifecycle test: `node gs/tests/departures-expiry.cjs <path-to-SheetJS-0.18.5-JS>`. It runs the actual app script and SheetJS parser with synthetic records, a controlled clock and a lightweight DOM/PDF test double. It covers visitor timezones, cutoff boundaries, expired requests, translations, stale async results, copy/export/import guards, resume/print checks, clock rollback, invalid configuration, future-event reuse and regular/exception/overnight behavior. The browser regression test freezes time before the production cutoff. Neither suite claims that a stubbed PDF was rendered by the real PDF library.
